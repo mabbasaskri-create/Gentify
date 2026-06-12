@@ -1,27 +1,7 @@
 // ===== FIREBASE AUTH =====
-// Replace with your Firebase project config from console.firebase.google.com
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+// Firebase is initialized in firebase.js (modular SDK)
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-function signInWithGoogle() {
-  return auth.signInWithPopup(googleProvider);
-}
-
-function signOutGoogle() {
-  return auth.signOut();
-}
-
-auth.onAuthStateChanged(function(firebaseUser) {
+window.onAuthStateChanged(function(firebaseUser) {
   if (firebaseUser) {
     var users = getUsers();
     var existing = users.find(function(u) { return u.uid === firebaseUser.uid; }) || users.find(function(u) { return u.email === firebaseUser.email; });
@@ -491,7 +471,7 @@ function signupUser(name, email, password) {
 }
 
 function logoutUser() {
-  auth.signOut();
+  window.signOutGoogle();
   saveCurrentUser(null);
   updateUserNav();
   window.location.href = 'index.html';
