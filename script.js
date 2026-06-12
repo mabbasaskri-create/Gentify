@@ -11,7 +11,7 @@ window.onAuthStateChanged(function(firebaseUser) {
         name: firebaseUser.displayName || 'Google User',
         email: firebaseUser.email,
         password: 'firebase_managed',
-        orders: generateMockOrders(firebaseUser.displayName || 'Google User', firebaseUser.email)
+        orders: []
       });
       saveUsers(users);
     } else if (!existing.uid) {
@@ -26,110 +26,98 @@ window.onAuthStateChanged(function(firebaseUser) {
 });
 
 // ===== PRODUCT DATA =====
-const products = {
+var DEFAULT_PRODUCTS = {
   caps: [
     { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 29.99, badge: null, category: 'Caps',
-      images: [
-        'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
-        'https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80',
-        'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'
-      ],
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: [{ name: 'White', hex: '#F5F5F0' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel. The perfect low-profile cap for sunny days and easy errands.', price: 32.00, badge: 'Popular', category: 'Caps',
-      images: [
-        'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80',
-        'https://images.unsplash.com/photo-1595433707800-5b393e94297a?w=600&q=80',
-        'https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80'
-      ],
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: [{ name: 'Beige', hex: '#D4C5A9' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Olive', hex: '#4A5D23' }] },
-    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look backed by premium construction and all-day comfort.', price: 34.50, badge: null, category: 'Caps',
-      images: [
-        'https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80',
-        'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80',
-        'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80'
-      ],
-      sizes: ['M', 'L', 'XL'],
-      colors: [{ name: 'Navy', hex: '#1B2A4A' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Gray', hex: '#6B6B6B' }] },
-    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build. Ready for the outdoors and built to last for years.', price: 36.00, badge: 'New', category: 'Caps',
-      images: [
-        'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80',
-        'https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80',
-        'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80'
-      ],
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: [{ name: 'Olive', hex: '#4A5D23' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
+      images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'],
+      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'White', hex: '#F5F5F0' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Navy', hex: '#1B2A4A' }] },
+    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 32.00, badge: 'Popular', category: 'Caps',
+      images: ['https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80','https://images.unsplash.com/photo-1595433707800-5b393e94297a?w=600&q=80','https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80'],
+      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Beige', hex: '#D4C5A9' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Olive', hex: '#4A5D23' }] },
+    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 34.50, badge: null, category: 'Caps',
+      images: ['https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80','https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80'],
+      sizes: ['M', 'L', 'XL'], colors: [{ name: 'Navy', hex: '#1B2A4A' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Gray', hex: '#6B6B6B' }] },
+    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 36.00, badge: 'New', category: 'Caps',
+      images: ['https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80'],
+      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Olive', hex: '#4A5D23' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   watches: [
-    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap. A precision chronograph that bridges classic style with everyday wearability.', price: 249.00, badge: 'Best Seller', category: 'Watches',
-      images: [
-        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-        'https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80',
-        'https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'
-      ],
-      sizes: ['Standard', 'Large'],
-      colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal. Clean, architectural design for those who believe less is always more.', price: 179.00, badge: null, category: 'Watches',
-      images: [
-        'https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80',
-        'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80',
-        'https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80'
-      ],
-      sizes: ['Standard', 'Large'],
-      colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Silver', hex: '#C0C0C0' }] },
-    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial. Water resistant to 50m — elegant enough for the office, tough enough for the weekend.', price: 199.00, badge: null, category: 'Watches',
-      images: [
-        'https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80',
-        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-        'https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80'
-      ],
-      sizes: ['Standard'],
-      colors: [{ name: 'Silver', hex: '#C0C0C0' }, { name: 'Gold', hex: '#C8965A' }] },
-    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case. Inspired by aviation instruments, built for the man who values precision and purpose.', price: 329.00, badge: 'Premium', category: 'Watches',
-      images: [
-        'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80',
-        'https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80',
-        'https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'
-      ],
-      sizes: ['Standard', 'Large'],
-      colors: [{ name: 'Brown', hex: '#5C3A1E' }, { name: 'Black', hex: '#1A1A1A' }] },
+    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 249.00, badge: 'Best Seller', category: 'Watches',
+      images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
+      sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }] },
+    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 179.00, badge: null, category: 'Watches',
+      images: ['https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80','https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80'],
+      sizes: ['Standard', 'Large'], colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Silver', hex: '#C0C0C0' }] },
+    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 199.00, badge: null, category: 'Watches',
+      images: ['https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80','https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80'],
+      sizes: ['Standard'], colors: [{ name: 'Silver', hex: '#C0C0C0' }, { name: 'Gold', hex: '#C8965A' }] },
+    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 329.00, badge: 'Premium', category: 'Watches',
+      images: ['https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
+      sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#5C3A1E' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   wallets: [
-    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather that develops a rich patina over time. Eight card slots and a spacious bill compartment in a slim profile.', price: 79.00, badge: 'Best Seller', category: 'Wallets',
-      images: [
-        'https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80',
-        'https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80',
-        'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'
-      ],
-      sizes: null,
-      colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Tan', hex: '#C4A882' }] },
-    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots. Ultra-slim construction that disappears into your front pocket while keeping everything secure.', price: 49.00, badge: null, category: 'Wallets',
-      images: [
-        'https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80',
-        'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-        'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'
-      ],
-      sizes: null,
-      colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design with a dedicated coin pocket. More carrying capacity without the bulk — the traditionalist\'s choice.', price: 89.00, badge: 'New', category: 'Wallets',
-      images: [
-        'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
-        'https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80',
-        'https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80'
-      ],
-      sizes: null,
-      colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction with a metal money clip and leather card slot. The fastest way to carry your daily essentials — nothing more.', price: 65.00, badge: null, category: 'Wallets',
-      images: [
-        'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-        'https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80',
-        'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'
-      ],
-      sizes: null,
-      colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }] },
+    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 79.00, badge: 'Best Seller', category: 'Wallets',
+      images: ['https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
+      sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Tan', hex: '#C4A882' }] },
+    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 49.00, badge: null, category: 'Wallets',
+      images: ['https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'],
+      sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }, { name: 'Navy', hex: '#1B2A4A' }] },
+    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 89.00, badge: 'New', category: 'Wallets',
+      images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80','https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80'],
+      sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
+    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 65.00, badge: null, category: 'Wallets',
+      images: ['https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
+      sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }] }
   ]
 };
+
+function getProducts() {
+  var stored = localStorage.getItem('dapperProducts');
+  if (stored) return JSON.parse(stored);
+  saveProducts(DEFAULT_PRODUCTS);
+  return DEFAULT_PRODUCTS;
+}
+
+function saveProducts(prods) {
+  localStorage.setItem('dapperProducts', JSON.stringify(prods));
+}
+
+function getAllProductsFlat() {
+  var prods = getProducts();
+  var flat = [];
+  Object.keys(prods).forEach(function(k) { flat = flat.concat(prods[k]); });
+  return flat;
+}
+
+function addProduct(product) {
+  var prods = getProducts();
+  var cat = (product.category || 'Caps').toLowerCase();
+  if (cat === 'caps') cat = 'caps';
+  else if (cat === 'watches') cat = 'watches';
+  else if (cat === 'wallets') cat = 'wallets';
+  else cat = 'caps';
+  if (!prods[cat]) prods[cat] = [];
+  prods[cat].push(product);
+  saveProducts(prods);
+}
+
+function updateProduct(id, updates) {
+  var prods = getProducts();
+  Object.keys(prods).forEach(function(k) {
+    prods[k] = prods[k].map(function(p) { return p.id === id ? Object.assign({}, p, updates) : p; });
+  });
+  saveProducts(prods);
+}
+
+function deleteProduct(id) {
+  var prods = getProducts();
+  Object.keys(prods).forEach(function(k) {
+    prods[k] = prods[k].filter(function(p) { return p.id !== id; });
+  });
+  saveProducts(prods);
+}
+
+let products = getProducts();
 
 // ===== ACTIVE NAV =====
 (function setActiveNav() {
@@ -463,7 +451,7 @@ function signupUser(name, email, password) {
   const users = getUsers();
   if (users.find(u => u.email === email)) return { error: 'An account with this email already exists.' };
   if (password !== 'firebase_managed' && password.length < 6) return { error: 'Password must be at least 6 characters.' };
-  users.push({ name, email, password, uid: null, orders: generateMockOrders(name, email) });
+  users.push({ name, email, password, uid: null, orders: [] });
   saveUsers(users);
   saveCurrentUser({ name, email });
   updateUserNav();
@@ -491,12 +479,14 @@ function updateUserNav() {
   const container = document.getElementById('userNav');
   if (!container) return;
   if (user) {
+    var isAdmin = user.email === 'm.abbas.askri@gmail.com';
     container.innerHTML = `
       <div class="user-badge" onclick="toggleUserDropdown()">
         <span class="avatar">${user.name.charAt(0).toUpperCase()}</span>
         ${user.name.split(' ')[0]}
       </div>
       <div class="user-dropdown" id="userDropdown">
+        ${isAdmin ? '<a href="admin.html">&#x1F6E1; Admin Panel</a>' : ''}
         <a href="orders.html">&#x1F4CB; My Orders</a>
         <a href="returns.html">&#x1F504; Returns</a>
         <a href="#" class="logout-option" onclick="logoutUser()">&#x2192; Logout</a>
@@ -576,4 +566,15 @@ function getUserOrders() {
 function getOrderById(orderId) {
   const orders = getUserOrders();
   return orders.find(o => o.id === orderId);
+}
+
+function updateOrderStatus(userEmail, orderId, newStatus) {
+  var users = getUsers();
+  var user = users.find(function(u) { return u.email === userEmail; });
+  if (!user || !user.orders) return;
+  var order = user.orders.find(function(o) { return o.id === orderId; });
+  if (!order) return;
+  order.status = newStatus;
+  saveUsers(users);
+  showToast('Order ' + orderId + ' updated to ' + newStatus);
 }
