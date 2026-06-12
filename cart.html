@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Shopping Cart — Dapper Essentials</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">DAPPER<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="cart-page" id="cartPage">
+  <div>
+    <h2>Shopping Cart</h2>
+    <div id="cartPageContent"></div>
+  </div>
+  <div class="cart-summary" id="cartSummary">
+    <h3>Order Summary</h3>
+    <div id="summaryContent">
+      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-val" id="summarySubtotal">$0.00</span></div>
+      <div class="summary-row"><span class="summary-label">Shipping</span><span class="summary-val" id="summaryShipping">Free</span></div>
+      <div class="summary-row"><span class="summary-label">Tax</span><span class="summary-val" id="summaryTax">$0.00</span></div>
+      <div class="coupon-form">
+        <input type="text" placeholder="Coupon code" id="couponInput" />
+        <button onclick="applyCoupon()">Apply</button>
+      </div>
+      <div class="summary-row total"><span class="summary-label">Total</span><span class="val" id="summaryTotal">$0.00</span></div>
+      <button class="checkout-btn" onclick="checkoutCart()">Proceed to Checkout &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay" onclick="closeProductDetail(event)">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="closeProductDetail()">&times;</button>
+    <div class="detail-layout">
+      <div class="detail-gallery">
+        <div class="detail-main-img-wrap"><img id="detailMainImg" src="" alt="" /></div>
+        <div class="detail-thumbnails" id="detailThumbnails"></div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-category" id="detailCategory"></div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-options" id="detailOptions"></div>
+        <div class="detail-add-row">
+          <div class="detail-qty"><button onclick="detailQtyChange(-1)">&minus;</button><span id="detailQty">1</span><button onclick="detailQtyChange(1)">+</button></div>
+          <button class="detail-add-btn" id="detailAddBtn" onclick="detailAddToCart()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+<script>
+function renderCartPage() {
+  const container = document.getElementById('cartPageContent');
+  const summaryEl = document.getElementById('cartSummary');
+  if (!container) return;
+  if (cart.length === 0) {
+    container.innerHTML = '<div class="cart-empty-state"><div class="empty-icon">&#x1F6CD;</div><h3>Your cart is empty</h3><p>Looks like you haven\'t added anything yet.</p><a href="caps.html" class="hero-cta" style="display:inline-block">Start Shopping</a></div>';
+    if (summaryEl) summaryEl.style.display = 'none';
+    return;
+  }
+  if (summaryEl) summaryEl.style.display = 'block';
+  container.innerHTML = '<div class="cart-page-items">' + cart.map(item => `
+    <div class="cart-page-item">
+      <img src="${item.images[0]}" alt="${item.name}" />
+      <div class="cart-page-item-info">
+        <h4>${item.name}</h4>
+        <div class="item-options">${[item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ')}</div>
+        <div class="item-price">$${item.price.toFixed(2)}</div>
+      </div>
+      <div class="cart-page-item-actions">
+        <div class="qty-controls">
+          <button onclick="cartPageQty('${item.cartKey}', -1)">&minus;</button>
+          <span>${item.qty}</span>
+          <button onclick="cartPageQty('${item.cartKey}', 1)">+</button>
+        </div>
+        <button class="remove-link" onclick="cartPageRemove('${item.cartKey}')">Remove</button>
+      </div>
+    </div>
+  `).join('') + '</div>';
+  updateCartSummary();
+}
+
+function cartPageQty(cartKey, delta) {
+  changeQty(cartKey, delta);
+  renderCartPage();
+}
+
+function cartPageRemove(cartKey) {
+  removeItem(cartKey);
+  renderCartPage();
+}
+
+function updateCartSummary() {
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = subtotal * 0.08;
+  const total = subtotal + tax;
+  const subEl = document.getElementById('summarySubtotal');
+  const taxEl = document.getElementById('summaryTax');
+  const totalEl = document.getElementById('summaryTotal');
+  if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
+  if (taxEl) taxEl.textContent = '$' + tax.toFixed(2);
+  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+}
+
+let couponApplied = false;
+function applyCoupon() {
+  const input = document.getElementById('couponInput');
+  if (!input || couponApplied) return;
+  const code = input.value.trim().toUpperCase();
+  if (code === 'DAPPER10') {
+    showToast('Coupon applied! 10% discount.');
+    couponApplied = true;
+    input.value = '';
+    input.disabled = true;
+    updateCartSummary();
+  } else {
+    showToast('Invalid coupon code.');
+  }
+}
+
+function checkoutCart() {
+  if (cart.length === 0) { showToast('Your cart is empty.'); return; }
+  if (!isLoggedIn()) { window.location.href = 'login.html?redirect=cart.html'; return; }
+  showToast('Order placed! Redirecting to orders...');
+  setTimeout(() => { window.location.href = 'orders.html'; }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', renderCartPage);
+</script>
+</body>
+</html>

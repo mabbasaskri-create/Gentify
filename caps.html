@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dapper Essentials — Caps</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">DAPPER<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<section class="section" style="min-height:calc(100vh - 70px)">
+  <h2 class="section-title">Caps</h2>
+  <p class="section-subtitle">Structured silhouettes for any occasion — from casual weekend to daily commute.</p>
+  <div class="product-grid" id="capsGrid"></div>
+</section>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h2>Your Cart</h2>
+    <button class="close-cart" onclick="closeCart()">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <div class="empty-icon">&#x1F6CD;</div>
+      <p>Your cart is empty.<br>Start adding some essentials.</p>
+    </div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-val" id="cartTotal">$0.00</span>
+    </div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<!-- PRODUCT DETAIL OVERLAY -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeProductDetail(event)">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="closeProductDetail()">&times;</button>
+    <div class="detail-layout">
+      <div class="detail-gallery">
+        <div class="detail-main-img-wrap">
+          <img id="detailMainImg" src="" alt="" />
+        </div>
+        <div class="detail-thumbnails" id="detailThumbnails"></div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-category" id="detailCategory"></div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-options" id="detailOptions"></div>
+        <div class="detail-add-row">
+          <div class="detail-qty">
+            <button onclick="detailQtyChange(-1)">&minus;</button>
+            <span id="detailQty">1</span>
+            <button onclick="detailQtyChange(1)">+</button>
+          </div>
+          <button class="detail-add-btn" id="detailAddBtn" onclick="detailAddToCart()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

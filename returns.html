@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Returns — Dapper Essentials</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">DAPPER<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="returns-page" id="returnsPage">
+  <div id="returnsContent" style="display:none">
+    <h2>Returns & Exchanges</h2>
+    <p class="returns-subtitle">We make returns easy. Here's everything you need to know.</p>
+
+    <div class="returns-policy">
+      <h3>Our Return Policy</h3>
+      <ul>
+        <li><span class="check">&#10003;</span> 30-day return window from the date of delivery</li>
+        <li><span class="check">&#10003;</span> Items must be unworn, unwashed, and in original packaging</li>
+        <li><span class="check">&#10003;</span> Free return shipping on all domestic orders</li>
+        <li><span class="check">&#10003;</span> Refunds processed within 5-7 business days after receiving the item</li>
+        <li><span class="check">&#10003;</span> Exchanges are processed immediately upon return scan</li>
+        <li><span class="check">&#10003;</span> Final sale items are not eligible for return</li>
+      </ul>
+    </div>
+
+    <div class="returns-policy" style="margin-bottom:32px">
+      <h3>How to Return</h3>
+      <ul>
+        <li><span class="check">1</span> Log into your account and go to <strong>My Orders</strong></li>
+        <li><span class="check">2</span> Select the order and click <strong>Return Item</strong></li>
+        <li><span class="check">3</span> Choose the item(s) and reason for return</li>
+        <li><span class="check">4</span> Print the prepaid return label</li>
+        <li><span class="check">5</span> Drop the package at any courier location</li>
+      </ul>
+    </div>
+
+    <div class="returns-form" id="returnForm">
+      <h3>Request a Return</h3>
+      <p style="color:var(--gray);font-size:0.9rem;margin-bottom:20px">Fill out the form below and our team will get back to you within 24 hours.</p>
+      <form onsubmit="handleReturnRequest(event)">
+        <div class="form-group">
+          <label for="returnOrder">Order ID</label>
+          <select id="returnOrder" required>
+            <option value="">Select an order</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="returnItem">Item</label>
+          <select id="returnItem" required>
+            <option value="">Select an item</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="returnReason">Reason for Return</label>
+          <select id="returnReason" required onchange="toggleDefectEvidence()">
+            <option value="">Select a reason</option>
+            <option>Wrong size or fit</option>
+            <option>Defective or damaged</option>
+            <option>Changed my mind</option>
+            <option>Quality not as expected</option>
+            <option>Arrived late</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group defect-evidence" id="defectEvidence" style="display:none">
+          <label for="defectVideo">Video of Defect <span style="color:red">*</span></label>
+          <input type="file" id="defectVideo" accept="video/*" capture="environment" />
+          <small style="color:var(--gray);font-size:0.82rem">Record a short video clearly showing the defect.</small>
+        </div>
+        <div class="form-group defect-evidence" id="defectImages" style="display:none">
+          <label>Photos of Defect <span style="color:red">*</span> (upload 3 photos)</label>
+          <div class="photo-uploads">
+            <label class="photo-box">
+              <input type="file" id="defectPhoto1" accept="image/*" capture="environment" />
+              <span class="photo-placeholder">+</span>
+            </label>
+            <label class="photo-box">
+              <input type="file" id="defectPhoto2" accept="image/*" capture="environment" />
+              <span class="photo-placeholder">+</span>
+            </label>
+            <label class="photo-box">
+              <input type="file" id="defectPhoto3" accept="image/*" capture="environment" />
+              <span class="photo-placeholder">+</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="returnDetails">Additional Details</label>
+          <textarea id="returnDetails" placeholder="Tell us more about the issue..."></textarea>
+        </div>
+        <button type="submit" class="submit-btn">Submit Return Request</button>
+      </form>
+      <p id="returnSuccess" style="display:none;color:#2e7d32;font-weight:600;margin-top:16px">&#10003; Return request submitted! We'll email you a prepaid label within 24 hours.</p>
+    </div>
+  </div>
+  <div id="returnsLoginPrompt" style="display:none;text-align:center;padding:80px 20px">
+    <div style="font-size:3rem;margin-bottom:16px">&#x1F512;</div>
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:8px">Sign in to Request a Return</h3>
+    <p style="color:var(--gray);margin-bottom:24px">You need to be signed in with Google to view your orders and submit a return request.</p>
+    <button class="google-btn" onclick="location.href='login.html?redirect=returns.html'" style="display:inline-flex;max-width:300px;margin:0 auto">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.54 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.54 10.54l7.97-6.2z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay" onclick="closeProductDetail(event)">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="closeProductDetail()">&times;</button>
+    <div class="detail-layout">
+      <div class="detail-gallery">
+        <div class="detail-main-img-wrap"><img id="detailMainImg" src="" alt="" /></div>
+        <div class="detail-thumbnails" id="detailThumbnails"></div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-category" id="detailCategory"></div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-options" id="detailOptions"></div>
+        <div class="detail-add-row">
+          <div class="detail-qty"><button onclick="detailQtyChange(-1)">&minus;</button><span id="detailQty">1</span><button onclick="detailQtyChange(1)">+</button></div>
+          <button class="detail-add-btn" id="detailAddBtn" onclick="detailAddToCart()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+<script>
+function loadReturnOrders() {
+  const sel = document.getElementById('returnOrder');
+  if (!sel) return;
+  const user = getCurrentUser();
+  if (!user) return;
+  const orders = getUserOrders();
+  sel.innerHTML = '<option value="">Select an order</option>' + orders.map(o =>
+    '<option value="' + o.id + '">' + o.id + ' — $' + o.total.toFixed(2) + ' (' + o.date + ')</option>'
+  ).join('');
+  sel.addEventListener('change', function() {
+    const itemSel = document.getElementById('returnItem');
+    const order = orders.find(o => o.id === this.value);
+    if (!order) { itemSel.innerHTML = '<option value="">Select an item</option>'; return; }
+    itemSel.innerHTML = '<option value="">Select an item</option>' + order.items.map(i =>
+      '<option value="' + i.name + '">' + i.name + ' (Qty: ' + i.qty + ')</option>'
+    ).join('');
+  });
+}
+
+function toggleDefectEvidence() {
+  const reason = document.getElementById('returnReason').value;
+  const isDefect = reason === 'Defective or damaged';
+  document.getElementById('defectEvidence').style.display = isDefect ? 'block' : 'none';
+  document.getElementById('defectImages').style.display = isDefect ? 'block' : 'none';
+  document.getElementById('defectVideo').required = isDefect;
+  document.getElementById('defectPhoto1').required = isDefect;
+  document.getElementById('defectPhoto2').required = isDefect;
+  document.getElementById('defectPhoto3').required = isDefect;
+}
+
+function handleReturnRequest(e) {
+  e.preventDefault();
+  const orderId = document.getElementById('returnOrder').value;
+  const item = document.getElementById('returnItem').value;
+  const reason = document.getElementById('returnReason').value;
+  if (!orderId || !item || !reason) { showToast('Please fill in all required fields.'); return; }
+  if (reason === 'Defective or damaged') {
+    const video = document.getElementById('defectVideo').files[0];
+    const photo1 = document.getElementById('defectPhoto1').files[0];
+    const photo2 = document.getElementById('defectPhoto2').files[0];
+    const photo3 = document.getElementById('defectPhoto3').files[0];
+    if (!video) { showToast('Please record a video of the defect.'); return; }
+    if (!photo1 || !photo2 || !photo3) { showToast('Please upload all 3 photos of the defect.'); return; }
+  }
+  document.getElementById('returnForm').querySelector('form').style.display = 'none';
+  document.getElementById('returnSuccess').style.display = 'block';
+  showToast('Return request submitted successfully!');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  auth.onAuthStateChanged(function() {
+    if (!isLoggedIn()) {
+      document.getElementById('returnsContent').style.display = 'none';
+      document.getElementById('returnsLoginPrompt').style.display = 'block';
+      return;
+    }
+    document.getElementById('returnsContent').style.display = 'block';
+    document.getElementById('returnsLoginPrompt').style.display = 'none';
+    loadReturnOrders();
+    ['defectPhoto1','defectPhoto2','defectPhoto3'].forEach(function(id) {
+      document.getElementById(id).addEventListener('change', function() {
+        var box = this.closest('.photo-box');
+        if (this.files && this.files[0]) {
+          box.classList.add('has-image');
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            box.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px" />';
+          };
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    });
+    document.getElementById('defectVideo').addEventListener('change', function() {
+      var label = this.closest('.defect-evidence').querySelector('label');
+      if (this.files && this.files[0]) {
+        label.innerHTML = 'Video of Defect <span style="color:red">*</span> <span style="color:green;font-weight:400">('+this.files[0].name+')</span>';
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

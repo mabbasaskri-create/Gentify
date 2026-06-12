@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Orders — Dapper Essentials</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">DAPPER<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="orders-page" id="ordersPage">
+  <div id="ordersContent"></div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay" onclick="closeProductDetail(event)">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="closeProductDetail()">&times;</button>
+    <div class="detail-layout">
+      <div class="detail-gallery">
+        <div class="detail-main-img-wrap"><img id="detailMainImg" src="" alt="" /></div>
+        <div class="detail-thumbnails" id="detailThumbnails"></div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-category" id="detailCategory"></div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-desc" id="detailDesc"></div>
+        <div class="detail-options" id="detailOptions"></div>
+        <div class="detail-add-row">
+          <div class="detail-qty"><button onclick="detailQtyChange(-1)">&minus;</button><span id="detailQty">1</span><button onclick="detailQtyChange(1)">+</button></div>
+          <button class="detail-add-btn" id="detailAddBtn" onclick="detailAddToCart()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+<script>
+function renderOrders() {
+  const container = document.getElementById('ordersContent');
+  if (!container) return;
+  const user = getCurrentUser();
+  if (!user) {
+    container.innerHTML = '<div class="orders-empty"><div class="empty-icon">&#x1F512;</div><h3>Sign in to view orders</h3><p>Please log in to see your order history.</p><a href="login.html?redirect=orders.html" class="hero-cta" style="display:inline-block">Sign In</a></div>';
+    return;
+  }
+  const orders = getUserOrders();
+  if (orders.length === 0) {
+    container.innerHTML = '<div class="orders-empty"><div class="empty-icon">&#x1F6CD;</div><h3>No orders yet</h3><p>You haven\'t placed any orders. Start shopping!</p><a href="caps.html" class="hero-cta" style="display:inline-block">Start Shopping</a></div>';
+    return;
+  }
+  container.innerHTML = '<h2>My Orders</h2><p class="orders-subtitle">View and track all your orders.</p>' +
+    orders.map(o => {
+      const statusClass = o.status;
+      const statusLabel = o.status.charAt(0).toUpperCase() + o.status.slice(1);
+      return `
+      <div class="order-card">
+        <div class="order-card-header">
+          <div>
+            <div class="order-id">${o.id}</div>
+            <div class="order-date">Placed on ${o.date}</div>
+          </div>
+          <span class="order-status ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="order-card-body">
+          ${o.items.map(item => `
+            <div class="order-card-item">
+              <img src="${item.img}" alt="${item.name}" />
+              <div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-qty">Qty: ${item.qty} &middot; $${item.price.toFixed(2)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="order-card-footer">
+          <div class="order-total">Total: <span>$${o.total.toFixed(2)}</span></div>
+          <a href="track-order.html?id=${o.id}" class="track-btn">Track Order</a>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  auth.onAuthStateChanged(function() { renderOrders(); });
+});
+</script>
+</body>
+</html>
