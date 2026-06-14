@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dapper Essentials — Product Detail</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
+    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+  }
+}
+</script>
+<script type="module" src="firebase.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">GENTIFY<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+
+<section class="product-detail-page" id="productDetailPage">
+  <div class="pd-loading" id="pdLoading">
+    <p>Loading product details&hellip;</p>
+  </div>
+  <div class="pd-error" id="pdError" style="display:none">
+    <h2>Product Not Found</h2>
+    <p>The product you're looking for doesn't exist or has been removed.</p>
+    <a href="caps.html" class="hero-cta">Browse Products</a>
+  </div>
+  <div class="pd-layout" id="pdLayout" style="display:none">
+    <div class="pd-gallery">
+      <div class="pd-main-img-wrap">
+        <img id="pdMainImg" src="" alt="" />
+        <button class="pd-nav-btn pd-nav-prev" id="pdPrevBtn" onclick="pdPrevImage()">&#8249;</button>
+        <button class="pd-nav-btn pd-nav-next" id="pdNextBtn" onclick="pdNextImage()">&#8250;</button>
+      </div>
+      <div class="pd-thumbnails" id="pdThumbnails"></div>
+    </div>
+    <div class="pd-info">
+      <div class="pd-breadcrumb" id="pdBreadcrumb"></div>
+      <div class="pd-badge" id="pdBadge"></div>
+      <h1 class="pd-name" id="pdName"></h1>
+      <div class="pd-price" id="pdPrice"></div>
+      <div class="pd-desc" id="pdDesc"></div>
+      <div class="pd-options" id="pdOptions"></div>
+      <div class="pd-add-row">
+        <div class="pd-qty">
+          <button onclick="pdQtyChange(-1)">&minus;</button>
+          <span id="pdQty">1</span>
+          <button onclick="pdQtyChange(1)">+</button>
+        </div>
+        <button class="pd-add-btn" id="pdAddBtn" onclick="pdAddToCart()">Add to Cart</button>
+      </div>
+      <div class="pd-meta">
+        <div class="pd-meta-item">
+          <span class="pd-meta-icon">&#x1F69A;</span>
+          <span>Free shipping on orders over $50</span>
+        </div>
+        <div class="pd-meta-item">
+          <span class="pd-meta-icon">&#x1F501;</span>
+          <span>30-day easy returns</span>
+        </div>
+        <div class="pd-meta-item">
+          <span class="pd-meta-icon">&#x1F3ED;</span>
+          <span>Lifetime craftsmanship guarantee</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="logo">GENTIFY<span style="color:var(--gold)">.</span></a>
+      <p>Premium caps, watches, and wallets for the modern gentleman. Handpicked quality, shipped worldwide.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Shop</h4>
+      <ul>
+            <li><a href="caps.html">Caps</a></li>
+            <li><a href="watches.html">Watches</a></li>
+            <li><a href="wallets.html">Wallets</a></li>
+            <li><a href="returns.html">Returns</a></li>
+            <li><a href="about.html">About Us</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Shipping Info</a></li>
+        <li><a href="#">Returns</a></li>
+        <li><a href="#">Size Guide</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">Our Story</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Sustainability</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Dapper Essentials. All rights reserved.</span>
+    <span><a href="#">Privacy</a> &middot; <a href="#">Terms</a> &middot; <a href="#">Accessibility</a></span>
+  </div>
+</footer>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h2>Your Cart</h2>
+    <button class="close-cart" onclick="closeCart()">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <div class="empty-icon">&#x1F6CD;</div>
+      <p>Your cart is empty.<br>Start adding some essentials.</p>
+    </div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-val" id="cartTotal">$0.00</span>
+    </div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js" defer></script>
+<script defer>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var productId = params.get('id');
+  if (productId) {
+    if (typeof renderProductDetailPage === 'function') {
+      renderProductDetailPage(productId);
+    } else {
+      // Wait for script.js to load if not ready
+      var check = setInterval(function() {
+        if (typeof renderProductDetailPage === 'function') {
+          clearInterval(check);
+          renderProductDetailPage(productId);
+        }
+      }, 50);
+      setTimeout(function() { clearInterval(check); }, 5000);
+    }
+  } else {
+    document.getElementById('pdLoading').style.display = 'none';
+    document.getElementById('pdError').style.display = 'block';
+    document.getElementById('pdError').querySelector('h2').textContent = 'No Product Specified';
+    document.getElementById('pdError').querySelector('p').textContent = 'Please select a product to view its details.';
+  }
+})();
+</script>
+</body>
+</html>

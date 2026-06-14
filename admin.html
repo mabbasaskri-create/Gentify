@@ -11,7 +11,8 @@
   "imports": {
     "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
     "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
-    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
+    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
   }
 }
 </script>
@@ -20,7 +21,7 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo">DAPPER<span>.</span></a>
+  <a href="index.html" class="logo">GENTIFY<span>.</span></a>
   <ul class="nav-links" id="navLinks">
     <li><a href="index.html">Home</a></li>
     <li><a href="caps.html">Caps</a></li>
@@ -108,8 +109,10 @@
           <textarea id="apDesc" placeholder="Product description..." rows="2"></textarea>
         </div>
         <div class="form-group">
-          <label>Image URLs (one per line)</label>
-          <textarea id="apImages" placeholder="https://..." rows="3"></textarea>
+          <label>Product Images</label>
+          <input type="file" id="apImages" accept="image/*" multiple />
+          <small style="color:var(--gray);font-size:0.82rem">Select one or more images from your device.</small>
+          <div id="apImagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
         </div>
         <div class="form-row2">
           <div class="form-group">
@@ -222,9 +225,44 @@ function loadProductsTable() {
 }
 
 var editingProductId = null;
+var editingProductImages = null;
+
+function filesToBase64(files) {
+  return new Promise(function(resolve) {
+    if (!files || files.length === 0) { resolve([]); return; }
+    var results = [];
+    var pending = files.length;
+    Array.from(files).forEach(function(file, i) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        results[i] = e.target.result;
+        pending--;
+        if (pending === 0) resolve(results);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+function imagePreviewFromFiles(files, previewEl) {
+  previewEl.innerHTML = '';
+  if (!files || files.length === 0) { previewEl.style.display = 'none'; return; }
+  previewEl.style.display = 'flex';
+  Array.from(files).forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var div = document.createElement('div');
+      div.style.cssText = 'width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)';
+      div.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover" />';
+      previewEl.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function showAddProductForm() {
   editingProductId = null;
+  editingProductImages = null;
   document.getElementById('addProductTitle').textContent = 'Add Product';
   document.getElementById('apName').value = '';
   document.getElementById('apCategory').value = 'caps';
@@ -234,6 +272,8 @@ function showAddProductForm() {
   document.getElementById('apSizes').value = '';
   document.getElementById('apColors').value = '';
   document.getElementById('apBadge').value = '';
+  document.getElementById('apImagePreview').innerHTML = '';
+  document.getElementById('apImagePreview').style.display = 'none';
   document.getElementById('addProductSection').style.display = 'block';
   document.getElementById('addProductSection').scrollIntoView({ behavior: 'smooth' });
 }
@@ -241,6 +281,18 @@ function showAddProductForm() {
 function hideAddProductForm() {
   document.getElementById('addProductSection').style.display = 'none';
   editingProductId = null;
+  editingProductImages = null;
+}
+
+function syncToFirestoreAndReload() {
+  syncToFirestore(getProducts());
+  hideAddProductForm();
+  loadProductsTable();
+  loadAdminStats();
+  var prods2 = getProducts();
+  renderProducts(prods2.caps, 'capsGrid');
+  renderProducts(prods2.watches, 'watchesGrid');
+  renderProducts(prods2.wallets, 'walletsGrid');
 }
 
 function saveProductForm() {
@@ -248,23 +300,33 @@ function saveProductForm() {
   var category = document.getElementById('apCategory').value;
   var price = parseFloat(document.getElementById('apPrice').value);
   var desc = document.getElementById('apDesc').value.trim();
-  var imagesStr = document.getElementById('apImages').value.trim();
+  var fileInput = document.getElementById('apImages');
   var sizesStr = document.getElementById('apSizes').value.trim();
   var colorsStr = document.getElementById('apColors').value.trim();
   var badge = document.getElementById('apBadge').value.trim() || null;
 
-  if (!name || !price || !desc || !imagesStr) {
-    showToast('Please fill in name, price, description, and at least one image URL.');
+  if (!name || !price || !desc) {
+    showToast('Please fill in name, price, and description.');
     return;
   }
 
-  var images = imagesStr.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  if (fileInput.files && fileInput.files.length > 0) {
+    filesToBase64(fileInput.files).then(function(images) {
+      if (images.length === 0) { showToast('Failed to read images.'); return; }
+      finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge);
+    });
+  } else if (editingProductImages && editingProductImages.length > 0) {
+    finishSaveProduct(name, category, price, desc, editingProductImages, sizesStr, colorsStr, badge);
+  } else {
+    showToast('Please select at least one product image.');
+  }
+}
+
+function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge) {
   var sizes = sizesStr ? sizesStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : null;
   var colors = colorsStr ? colorsStr.split(',').map(function(s) {
     return { name: s.trim(), hex: '#' + (s.trim() === 'Black' ? '1A1A1A' : s.trim() === 'White' ? 'F5F5F0' : s.trim() === 'Navy' ? '1B2A4A' : s.trim() === 'Brown' ? '6B4226' : s.trim() === 'Tan' ? 'C4A882' : s.trim() === 'Olive' ? '4A5D23' : s.trim() === 'Gray' ? '6B6B6B' : s.trim() === 'Silver' ? 'C0C0C0' : s.trim() === 'Gold' ? 'C8965A' : 'CCCCCC') };
   }) : null;
-
-  var prods = getProducts();
 
   if (editingProductId) {
     var flat = getAllProductsFlat();
@@ -299,12 +361,7 @@ function saveProductForm() {
     showToast('Product added successfully!');
   }
 
-  hideAddProductForm();
-  loadProductsTable();
-  var prods2 = getProducts();
-  renderProducts(prods2.caps, 'capsGrid');
-  renderProducts(prods2.watches, 'watchesGrid');
-  renderProducts(prods2.wallets, 'walletsGrid');
+  syncToFirestoreAndReload();
 }
 
 function editProduct(id) {
@@ -312,15 +369,21 @@ function editProduct(id) {
   var p = flat.find(function(prod) { return prod.id === id; });
   if (!p) return;
   editingProductId = id;
+  editingProductImages = p.images;
   document.getElementById('addProductTitle').textContent = 'Edit Product';
   document.getElementById('apName').value = p.name;
   document.getElementById('apCategory').value = p.category ? p.category.toLowerCase() : 'caps';
   document.getElementById('apPrice').value = p.price;
   document.getElementById('apDesc').value = p.desc;
-  document.getElementById('apImages').value = p.images.join('\n');
+  document.getElementById('apImages').value = '';
   document.getElementById('apSizes').value = p.sizes ? p.sizes.join(', ') : '';
   document.getElementById('apColors').value = p.colors ? p.colors.map(function(c) { return c.name; }).join(', ') : '';
   document.getElementById('apBadge').value = p.badge || '';
+  var preview = document.getElementById('apImagePreview');
+  preview.innerHTML = p.images.map(function(img) {
+    return '<div style="width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover" /></div>';
+  }).join('');
+  preview.style.display = 'flex';
   document.getElementById('addProductSection').style.display = 'block';
   document.getElementById('addProductSection').scrollIntoView({ behavior: 'smooth' });
 }
@@ -328,12 +391,7 @@ function editProduct(id) {
 function deleteProductConfirm(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
   deleteProduct(id);
-  loadProductsTable();
-  loadAdminStats();
-  var prods = getProducts();
-  renderProducts(prods.caps, 'capsGrid');
-  renderProducts(prods.watches, 'watchesGrid');
-  renderProducts(prods.wallets, 'walletsGrid');
+  syncToFirestoreAndReload();
   showToast('Product deleted.');
 }
 
@@ -378,6 +436,9 @@ function changeOrderStatus(userEmail, orderId, newStatus) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('apImages').addEventListener('change', function() {
+    imagePreviewFromFiles(this.files, document.getElementById('apImagePreview'));
+  });
   window.onAuthStateChanged(function() {
     var user = getCurrentUser();
     var isAdmin = user && user.email === 'm.abbas.askri@gmail.com';

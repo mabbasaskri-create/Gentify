@@ -99,6 +99,7 @@ function addProduct(product) {
   if (!prods[cat]) prods[cat] = [];
   prods[cat].push(product);
   saveProducts(prods);
+  syncToFirestore(prods);
 }
 
 function updateProduct(id, updates) {
@@ -107,6 +108,7 @@ function updateProduct(id, updates) {
     prods[k] = prods[k].map(function(p) { return p.id === id ? Object.assign({}, p, updates) : p; });
   });
   saveProducts(prods);
+  syncToFirestore(prods);
 }
 
 function deleteProduct(id) {
@@ -115,9 +117,59 @@ function deleteProduct(id) {
     prods[k] = prods[k].filter(function(p) { return p.id !== id; });
   });
   saveProducts(prods);
+  syncToFirestore(prods);
 }
 
-let products = getProducts();
+let products = {};
+let allProducts = [];
+
+// ===== FIRESTORE SYNC =====
+function loadProductsFromFirestore() {
+  if (typeof window.loadProductsFromFirestore !== 'function') return Promise.resolve(null);
+  return window.loadProductsFromFirestore();
+}
+
+function syncToFirestore(prods) {
+  if (typeof window.syncProductsToFirestore === 'function') {
+    window.syncProductsToFirestore(prods || getProducts()).then(function() {
+      // Use Firestore's timestamp as the authoritative one
+      localStorage.setItem('dapperProductsTS', String(Date.now()));
+    }).catch(function() {});
+  }
+}
+
+function syncFromFirestore() {
+  loadProductsFromFirestore().then(function(result) {
+    if (result && result.data) {
+      var localTS = parseInt(localStorage.getItem('dapperProductsTS') || '0');
+      if (result.updated > localTS) {
+        localStorage.setItem('dapperProductsTS', String(result.updated));
+        saveProducts(result.data);
+        products = result.data;
+        allProducts = getAllProductsFlat();
+        renderAllProductGrids();
+      }
+    } else {
+      // No Firestore data — seed it with current products
+      var current = getProducts();
+      if (typeof window.syncProductsToFirestore === 'function') {
+        window.syncProductsToFirestore(current).then(function() {
+          localStorage.setItem('dapperProductsTS', String(Date.now()));
+        }).catch(function() {});
+      }
+    }
+  }).catch(function() {
+    // Firestore unavailable — localStorage cache is fine
+  });
+}
+
+// Initialize: render from localStorage cache first, then update from Firestore
+(function initProducts() {
+  products = getProducts();
+  allProducts = getAllProductsFlat();
+  renderAllProductGrids();
+  syncFromFirestore();
+})();
 
 // ===== ACTIVE NAV =====
 (function setActiveNav() {
@@ -143,7 +195,7 @@ function renderProducts(list, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = list.map(p => `
-    <div class="product-card" onclick="openProductDetail('${p.id}')">
+    <div class="product-card" onclick="location.href='product-detail.html?id=${p.id}'">
       <div class="product-img-wrap">
         <img src="${p.images[0]}" alt="${p.name}" loading="lazy" />
         ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
@@ -160,9 +212,11 @@ function renderProducts(list, containerId) {
   `).join('');
 }
 
-renderProducts(products.caps, 'capsGrid');
-renderProducts(products.watches, 'watchesGrid');
-renderProducts(products.wallets, 'walletsGrid');
+function renderAllProductGrids() {
+  if (products.caps) renderProducts(products.caps, 'capsGrid');
+  if (products.watches) renderProducts(products.watches, 'watchesGrid');
+  if (products.wallets) renderProducts(products.wallets, 'walletsGrid');
+}
 
 // ===== QUICK ADD =====
 function quickAdd(id) {
@@ -172,9 +226,6 @@ function quickAdd(id) {
   const color = product.colors ? product.colors[0].name : null;
   addToCart(product, size, color, 1);
 }
-
-// ===== PRODUCT DETAIL =====
-const allProducts = [...products.caps, ...products.watches, ...products.wallets];
 
 function openProductDetail(id) {
   const product = allProducts.find(p => p.id === id);
@@ -283,6 +334,141 @@ function detailAddToCart() {
   if (!detailProduct) return;
   addToCart(detailProduct, detailSelectedSize, detailSelectedColor, detailQty);
   closeProductDetail();
+}
+
+// ===== PRODUCT DETAIL PAGE (standalone) =====
+let pdProduct = null;
+let pdSelectedSize = null;
+let pdSelectedColor = null;
+let pdQty = 1;
+let pdCurrentImage = 0;
+
+function renderProductDetailPage(id) {
+  pdProduct = allProducts.find(function(p) { return p.id === id; });
+  if (!pdProduct) {
+    document.getElementById('pdLoading').style.display = 'none';
+    document.getElementById('pdError').style.display = 'block';
+    return;
+  }
+
+  pdQty = 1;
+  pdCurrentImage = 0;
+  pdSelectedSize = pdProduct.sizes ? pdProduct.sizes[0] : null;
+  pdSelectedColor = pdProduct.colors ? pdProduct.colors[0].name : null;
+
+  document.getElementById('pdLoading').style.display = 'none';
+  document.getElementById('pdLayout').style.display = 'grid';
+
+  document.getElementById('pdBreadcrumb').innerHTML = '<a href="' + pdProduct.category.toLowerCase() + '.html">' + pdProduct.category + '</a> <span class="pd-breadcrumb-sep">/</span> <span>' + pdProduct.name + '</span>';
+  document.getElementById('pdName').textContent = pdProduct.name;
+  document.getElementById('pdPrice').textContent = '$' + pdProduct.price.toFixed(2);
+  document.getElementById('pdDesc').textContent = pdProduct.desc;
+  document.getElementById('pdQty').textContent = '1';
+
+  var badgeEl = document.getElementById('pdBadge');
+  if (pdProduct.badge) {
+    badgeEl.textContent = pdProduct.badge;
+    badgeEl.style.display = 'inline-block';
+  } else {
+    badgeEl.style.display = 'none';
+  }
+
+  document.title = pdProduct.name + ' — Dapper Essentials';
+
+  updatePdGallery();
+  updatePdOptions();
+  updatePdAddBtn();
+}
+
+function updatePdGallery() {
+  if (!pdProduct) return;
+  var mainImg = document.getElementById('pdMainImg');
+  mainImg.src = pdProduct.images[pdCurrentImage];
+  mainImg.alt = pdProduct.name;
+
+  var thumbs = document.getElementById('pdThumbnails');
+  thumbs.innerHTML = pdProduct.images.map(function(img, i) {
+    return '<div class="pd-thumb' + (i === pdCurrentImage ? ' active' : '') + '" onclick="switchPdImage(' + i + ')">' +
+      '<img src="' + img + '" alt="' + pdProduct.name + ' view ' + (i + 1) + '" />' +
+      '</div>';
+  }).join('');
+
+  var prev = document.getElementById('pdPrevBtn');
+  var next = document.getElementById('pdNextBtn');
+  if (prev) prev.style.display = pdProduct.images.length > 1 ? 'flex' : 'none';
+  if (next) next.style.display = pdProduct.images.length > 1 ? 'flex' : 'none';
+}
+
+function switchPdImage(index) {
+  pdCurrentImage = index;
+  updatePdGallery();
+}
+
+function pdPrevImage() {
+  if (!pdProduct) return;
+  pdCurrentImage = pdCurrentImage > 0 ? pdCurrentImage - 1 : pdProduct.images.length - 1;
+  updatePdGallery();
+}
+
+function pdNextImage() {
+  if (!pdProduct) return;
+  pdCurrentImage = pdCurrentImage < pdProduct.images.length - 1 ? pdCurrentImage + 1 : 0;
+  updatePdGallery();
+}
+
+function updatePdOptions() {
+  if (!pdProduct) return;
+  var container = document.getElementById('pdOptions');
+  var html = '';
+
+  if (pdProduct.sizes) {
+    html += '<div class="option-group"><div class="option-label">Size <span>' + pdSelectedSize + '</span></div><div class="size-options">';
+    pdProduct.sizes.forEach(function(s) {
+      html += '<button class="size-btn' + (s === pdSelectedSize ? ' active' : '') + '" onclick="selectPdSize(\'' + s + '\')">' + s + '</button>';
+    });
+    html += '</div></div>';
+  }
+
+  if (pdProduct.colors) {
+    html += '<div class="option-group"><div class="option-label">Color <span>' + pdSelectedColor + '</span></div><div class="color-options">';
+    pdProduct.colors.forEach(function(c) {
+      html += '<label class="color-option">' +
+        '<span class="color-swatch' + (c.name === pdSelectedColor ? ' active' : '') + '" style="background:' + c.hex + '" onclick="selectPdColor(\'' + c.name + '\')"></span>' +
+        '<span class="color-swatch-label">' + c.name + '</span>' +
+        '</label>';
+    });
+    html += '</div></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function selectPdSize(size) {
+  pdSelectedSize = size;
+  updatePdOptions();
+}
+
+function selectPdColor(color) {
+  pdSelectedColor = color;
+  updatePdOptions();
+}
+
+function pdQtyChange(delta) {
+  pdQty = Math.max(1, pdQty + delta);
+  document.getElementById('pdQty').textContent = pdQty;
+  updatePdAddBtn();
+}
+
+function updatePdAddBtn() {
+  var btn = document.getElementById('pdAddBtn');
+  if (!pdProduct) return;
+  btn.textContent = 'Add to Cart \u2014 $' + (pdProduct.price * pdQty).toFixed(2);
+}
+
+function pdAddToCart() {
+  if (!pdProduct) return;
+  addToCart(pdProduct, pdSelectedSize, pdSelectedColor, pdQty);
+  showToast('"' + pdProduct.name + '" added to cart');
 }
 
 // ===== CART LOGIC =====
