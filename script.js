@@ -186,8 +186,14 @@ function syncFromFirestore(callback) {
   });
 }
 
-// Initialize: load from Firestore first, fall back to localStorage cache
+// Initialize: render from localStorage immediately, then sync from Firestore
 (function initApp() {
+  var cached = getProducts();
+  if (Object.keys(cached).length > 0) {
+    products = cached;
+    allProducts = getAllProductsFlat();
+    renderAllProductGrids();
+  }
   syncFromFirestore(function() {
     renderAllProductGrids();
   });
@@ -239,6 +245,8 @@ function renderAllProductGrids() {
   if (products.caps) renderProducts(products.caps, 'capsGrid');
   if (products.watches) renderProducts(products.watches, 'watchesGrid');
   if (products.wallets) renderProducts(products.wallets, 'walletsGrid');
+  var premium = allProducts.filter(function(p) { return p.badge === 'Premium'; });
+  if (premium.length > 0) renderProducts(premium, 'premiumGrid');
 }
 
 // ===== QUICK ADD =====
