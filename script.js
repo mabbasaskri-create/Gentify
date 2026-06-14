@@ -72,14 +72,14 @@ var DEFAULT_PRODUCTS = {
 };
 
 function getProducts() {
-  var stored = localStorage.getItem('dapperProducts');
+  var stored = localStorage.getItem('gentifyProducts');
   if (stored) return JSON.parse(stored);
   saveProducts(DEFAULT_PRODUCTS);
   return DEFAULT_PRODUCTS;
 }
 
 function saveProducts(prods) {
-  localStorage.setItem('dapperProducts', JSON.stringify(prods));
+  localStorage.setItem('gentifyProducts', JSON.stringify(prods));
 }
 
 function getAllProductsFlat() {
@@ -133,7 +133,7 @@ function syncToFirestore(prods) {
   if (typeof window.syncProductsToFirestore === 'function') {
     window.syncProductsToFirestore(prods || getProducts()).then(function() {
       // Use Firestore's timestamp as the authoritative one
-      localStorage.setItem('dapperProductsTS', String(Date.now()));
+      localStorage.setItem('gentifyProductsTS', String(Date.now()));
     }).catch(function() {});
   }
 }
@@ -141,9 +141,9 @@ function syncToFirestore(prods) {
 function syncFromFirestore() {
   loadProductsFromFirestore().then(function(result) {
     if (result && result.data) {
-      var localTS = parseInt(localStorage.getItem('dapperProductsTS') || '0');
+      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
       if (result.updated > localTS) {
-        localStorage.setItem('dapperProductsTS', String(result.updated));
+        localStorage.setItem('gentifyProductsTS', String(result.updated));
         saveProducts(result.data);
         products = result.data;
         allProducts = getAllProductsFlat();
@@ -154,7 +154,7 @@ function syncFromFirestore() {
       var current = getProducts();
       if (typeof window.syncProductsToFirestore === 'function') {
         window.syncProductsToFirestore(current).then(function() {
-          localStorage.setItem('dapperProductsTS', String(Date.now()));
+          localStorage.setItem('gentifyProductsTS', String(Date.now()));
         }).catch(function() {});
       }
     }
@@ -181,7 +181,7 @@ function syncFromFirestore() {
 })();
 
 // ===== CART STATE =====
-let cart = JSON.parse(localStorage.getItem('dapperCart') || '[]');
+let cart = JSON.parse(localStorage.getItem('gentifyCart') || '[]');
 
 // ===== DETAIL STATE =====
 let detailProduct = null;
@@ -486,7 +486,7 @@ function addToCart(product, size, color, qty) {
 }
 
 function saveCart() {
-  localStorage.setItem('dapperCart', JSON.stringify(cart));
+  localStorage.setItem('gentifyCart', JSON.stringify(cart));
 }
 
 function updateCartUI() {
@@ -616,12 +616,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== AUTH SYSTEM =====
-function getUsers() { return JSON.parse(localStorage.getItem('dapperUsers') || '[]'); }
-function saveUsers(users) { localStorage.setItem('dapperUsers', JSON.stringify(users)); }
-function getCurrentUser() { return JSON.parse(localStorage.getItem('dapperCurrentUser') || 'null'); }
+function getUsers() { return JSON.parse(localStorage.getItem('gentifyUsers') || '[]'); }
+function saveUsers(users) { localStorage.setItem('gentifyUsers', JSON.stringify(users)); }
+function getCurrentUser() { return JSON.parse(localStorage.getItem('gentifyCurrentUser') || 'null'); }
 function saveCurrentUser(user) {
-  if (user) localStorage.setItem('dapperCurrentUser', JSON.stringify(user));
-  else localStorage.removeItem('dapperCurrentUser');
+  if (user) localStorage.setItem('gentifyCurrentUser', JSON.stringify(user));
+  else localStorage.removeItem('gentifyCurrentUser');
 }
 
 function loginUser(email, password) {
