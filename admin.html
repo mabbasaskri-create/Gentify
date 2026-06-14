@@ -194,7 +194,7 @@
 <script>
 function loadAdminData() {
   Promise.all([
-    loadProductsFromFirestore(),
+    loadProdFromFirestore(),
     typeof window.getFirestoreUsers === 'function' ? window.getFirestoreUsers() : Promise.resolve([])
   ]).then(function(results) {
     var prodResult = results[0];

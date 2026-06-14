@@ -147,7 +147,7 @@ let products = {};
 let allProducts = [];
 
 // ===== FIRESTORE SYNC =====
-function loadProductsFromFirestore() {
+function loadProdFromFirestore() {
   if (typeof window.loadProductsFromFirestore !== 'function') return Promise.resolve(null);
   return window.loadProductsFromFirestore();
 }
@@ -162,7 +162,7 @@ function syncToFirestore(prods) {
 }
 
 function syncFromFirestore(callback) {
-  loadProductsFromFirestore().then(function(result) {
+  loadProdFromFirestore().then(function(result) {
     if (result && result.data && Object.keys(result.data).length > 0) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
       if (result.updated > localTS || !localStorage.getItem('gentifyProducts')) {
