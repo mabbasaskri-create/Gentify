@@ -76,14 +76,14 @@ nav {
 
 /* ===== HERO ===== */
 #hero {
-  padding: 80px 5% 80px;
+  padding: 100px 5% 80px;
   min-height: 70vh;
-  display: flex; align-items: center;
+  display: flex; align-items: center; justify-content: center;
   background: var(--cream);
   position: relative; overflow: hidden;
 }
 
-.hero-content { max-width: 680px; }
+.hero-content { max-width: 780px; text-align: center; }
 
 .hero-eyebrow {
   font-size: 0.78rem; font-weight: 600; letter-spacing: 0.22em;
@@ -103,8 +103,8 @@ nav {
 }
 
 .hero-subtitle {
-  font-size: 1.05rem; color: var(--gray);
-  max-width: 480px; margin-bottom: 40px; line-height: 1.7;
+  font-size: 1.15rem; color: var(--gray);
+  max-width: 600px; margin: 0 auto 40px; line-height: 1.7;
 }
 
 .hero-cta {
@@ -120,7 +120,9 @@ nav {
 .hero-stats {
   display: flex; gap: 40px; margin-top: 64px;
   padding-top: 40px; border-top: 1px solid var(--border);
+  justify-content: center;
 }
+.stat-item { text-align: center; }
 .stat-num {
   font-family: 'Playfair Display', serif;
   font-size: 2rem; font-weight: 700; color: var(--black);
@@ -1088,7 +1090,7 @@ footer {
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
   footer { padding: 40px 4% 24px; }
 
-  #hero { padding: 48px 4% 48px; min-height: auto; }
+  #hero { padding: 72px 4% 48px; min-height: auto; }
   .hero-title { font-size: clamp(2rem, 8vw, 3.2rem); }
   .hero-subtitle { font-size: 0.95rem; max-width: 100%; }
   .hero-stats { gap: 20px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; }
