@@ -175,25 +175,13 @@ function syncFromFirestore(callback) {
         allProducts = getAllProductsFlat();
       }
     } else {
-      var stored = localStorage.getItem('gentifyProducts');
-      if (stored) {
-        var parsed = JSON.parse(stored);
-        if (Object.keys(parsed).length > 0) {
-          products = parsed;
-          allProducts = getAllProductsFlat();
-        } else {
-          products = {};
-          allProducts = [];
-        }
-      } else {
-        products = {};
-        allProducts = [];
-      }
+      products = getProducts();
+      allProducts = getAllProductsFlat();
     }
     if (callback) callback();
   }).catch(function() {
-    products = {};
-    allProducts = [];
+    products = getProducts();
+    allProducts = getAllProductsFlat();
     if (callback) callback();
   });
 }

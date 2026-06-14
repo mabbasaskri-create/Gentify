@@ -162,15 +162,16 @@
   var params = new URLSearchParams(window.location.search);
   var productId = params.get('id');
   if (productId) {
-    if (typeof renderProductDetailPage === 'function') {
-      renderProductDetailPage(productId);
-    } else {
-      // Wait for script.js to load if not ready
+    function tryRender() {
+      if (typeof renderProductDetailPage === 'function' && allProducts && allProducts.length > 0) {
+        renderProductDetailPage(productId);
+        return true;
+      }
+      return false;
+    }
+    if (!tryRender()) {
       var check = setInterval(function() {
-        if (typeof renderProductDetailPage === 'function') {
-          clearInterval(check);
-          renderProductDetailPage(productId);
-        }
+        if (tryRender()) clearInterval(check);
       }, 50);
       setTimeout(function() { clearInterval(check); }, 5000);
     }
