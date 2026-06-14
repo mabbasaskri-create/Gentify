@@ -3,22 +3,41 @@
 
 window.onAuthStateChanged(function(firebaseUser) {
   if (firebaseUser) {
-    var users = getUsers();
-    var existing = users.find(function(u) { return u.uid === firebaseUser.uid; }) || users.find(function(u) { return u.email === firebaseUser.email; });
-    if (!existing) {
-      users.push({
-        uid: firebaseUser.uid,
-        name: firebaseUser.displayName || 'Google User',
-        email: firebaseUser.email,
-        password: 'firebase_managed',
-        orders: []
-      });
-      saveUsers(users);
-    } else if (!existing.uid) {
-      existing.uid = firebaseUser.uid;
-      saveUsers(users);
+    var sessionUser = { name: firebaseUser.displayName || 'Google User', email: firebaseUser.email, uid: firebaseUser.uid };
+    saveCurrentUser(sessionUser);
+
+    var userData = {
+      uid: firebaseUser.uid,
+      name: firebaseUser.displayName || 'Google User',
+      email: firebaseUser.email,
+      password: 'firebase_managed',
+      orders: [],
+      cart: []
+    };
+
+    if (typeof window.getFirestoreUser === 'function') {
+      window.getFirestoreUser(firebaseUser.email).then(function(existing) {
+        if (existing) {
+          var cache = getUsers();
+          var idx = cache.findIndex(function(u) { return u.email === firebaseUser.email; });
+          if (idx >= 0) cache[idx] = existing;
+          else cache.push(existing);
+          localStorage.setItem('gentifyUsers', JSON.stringify(cache));
+
+          if (existing.cart) {
+            cart = existing.cart;
+            saveCart();
+          }
+        } else {
+          window.setFirestoreUser(firebaseUser.email, userData).catch(function() {});
+          var cache = getUsers();
+          if (!cache.find(function(u) { return u.email === firebaseUser.email; })) {
+            cache.push(userData);
+            localStorage.setItem('gentifyUsers', JSON.stringify(cache));
+          }
+        }
+      }).catch(function() {});
     }
-    saveCurrentUser({ name: firebaseUser.displayName || 'Google User', email: firebaseUser.email, uid: firebaseUser.uid });
   } else {
     saveCurrentUser(null);
   }
@@ -80,6 +99,9 @@ function getProducts() {
 
 function saveProducts(prods) {
   localStorage.setItem('gentifyProducts', JSON.stringify(prods));
+  if (typeof window.syncProductsToFirestore === 'function') {
+    window.syncProductsToFirestore(prods).catch(function() {});
+  }
 }
 
 function getAllProductsFlat() {
@@ -99,7 +121,6 @@ function addProduct(product) {
   if (!prods[cat]) prods[cat] = [];
   prods[cat].push(product);
   saveProducts(prods);
-  syncToFirestore(prods);
 }
 
 function updateProduct(id, updates) {
@@ -108,7 +129,6 @@ function updateProduct(id, updates) {
     prods[k] = prods[k].map(function(p) { return p.id === id ? Object.assign({}, p, updates) : p; });
   });
   saveProducts(prods);
-  syncToFirestore(prods);
 }
 
 function deleteProduct(id) {
@@ -117,7 +137,6 @@ function deleteProduct(id) {
     prods[k] = prods[k].filter(function(p) { return p.id !== id; });
   });
   saveProducts(prods);
-  syncToFirestore(prods);
 }
 
 let products = {};
@@ -138,37 +157,43 @@ function syncToFirestore(prods) {
   }
 }
 
-function syncFromFirestore() {
+function syncFromFirestore(callback) {
   loadProductsFromFirestore().then(function(result) {
     if (result && result.data) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
-      if (result.updated > localTS) {
+      if (result.updated > localTS || !localStorage.getItem('gentifyProducts')) {
         localStorage.setItem('gentifyProductsTS', String(result.updated));
-        saveProducts(result.data);
+        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
         products = result.data;
         allProducts = getAllProductsFlat();
-        renderAllProductGrids();
+      } else {
+        products = getProducts();
+        allProducts = getAllProductsFlat();
       }
     } else {
-      // No Firestore data — seed it with current products
       var current = getProducts();
+      products = current;
+      allProducts = getAllProductsFlat();
       if (typeof window.syncProductsToFirestore === 'function') {
         window.syncProductsToFirestore(current).then(function() {
           localStorage.setItem('gentifyProductsTS', String(Date.now()));
         }).catch(function() {});
       }
     }
+    if (callback) callback();
   }).catch(function() {
-    // Firestore unavailable — localStorage cache is fine
+    products = getProducts();
+    allProducts = getAllProductsFlat();
+    if (callback) callback();
   });
 }
 
-// Initialize: render from localStorage cache first, then update from Firestore
-(function initProducts() {
-  products = getProducts();
-  allProducts = getAllProductsFlat();
-  renderAllProductGrids();
-  syncFromFirestore();
+// Initialize: load from Firestore first, fall back to localStorage cache
+(function initApp() {
+  syncFromFirestore(function() {
+    renderAllProductGrids();
+  });
+  syncUsersFromFirestore();
 })();
 
 // ===== ACTIVE NAV =====
@@ -373,7 +398,7 @@ function renderProductDetailPage(id) {
     badgeEl.style.display = 'none';
   }
 
-  document.title = pdProduct.name + ' — Dapper Essentials';
+  document.title = pdProduct.name + ' — Gentify Essentials';
 
   updatePdGallery();
   updatePdOptions();
@@ -487,6 +512,15 @@ function addToCart(product, size, color, qty) {
 
 function saveCart() {
   localStorage.setItem('gentifyCart', JSON.stringify(cart));
+  var user = getCurrentUser();
+  if (user && typeof window.getFirestoreUser === 'function') {
+    window.getFirestoreUser(user.email).then(function(data) {
+      if (data) {
+        data.cart = cart;
+        window.setFirestoreUser(user.email, data).catch(function() {});
+      }
+    }).catch(function() {});
+  }
 }
 
 function updateCartUI() {
@@ -587,7 +621,7 @@ function subscribeNewsletter() {
     return;
   }
   val.value = '';
-  showToast('You\'re subscribed! Welcome to Dapper.');
+  showToast('You\'re subscribed! Welcome to Gentify.');
 }
 
 // ===== HAMBURGER =====
@@ -617,7 +651,14 @@ document.addEventListener('keydown', (e) => {
 
 // ===== AUTH SYSTEM =====
 function getUsers() { return JSON.parse(localStorage.getItem('gentifyUsers') || '[]'); }
-function saveUsers(users) { localStorage.setItem('gentifyUsers', JSON.stringify(users)); }
+function saveUsers(users) {
+  localStorage.setItem('gentifyUsers', JSON.stringify(users));
+  if (typeof window.setFirestoreUser === 'function') {
+    users.forEach(function(u) {
+      if (u.email) window.setFirestoreUser(u.email, u).catch(function() {});
+    });
+  }
+}
 function getCurrentUser() { return JSON.parse(localStorage.getItem('gentifyCurrentUser') || 'null'); }
 function saveCurrentUser(user) {
   if (user) localStorage.setItem('gentifyCurrentUser', JSON.stringify(user));
@@ -634,12 +675,16 @@ function loginUser(email, password) {
 }
 
 function signupUser(name, email, password) {
-  const users = getUsers();
-  if (users.find(u => u.email === email)) return { error: 'An account with this email already exists.' };
+  var users = getUsers();
+  if (users.find(function(u) { return u.email === email; })) return { error: 'An account with this email already exists.' };
   if (password !== 'firebase_managed' && password.length < 6) return { error: 'Password must be at least 6 characters.' };
-  users.push({ name, email, password, uid: null, orders: [] });
-  saveUsers(users);
-  saveCurrentUser({ name, email });
+  var newUser = { name: name, email: email, password: password, uid: null, orders: [], cart: [] };
+  users.push(newUser);
+  if (typeof window.setFirestoreUser === 'function') {
+    window.setFirestoreUser(email, newUser).catch(function() {});
+  }
+  localStorage.setItem('gentifyUsers', JSON.stringify(users));
+  saveCurrentUser({ name: name, email: email });
   updateUserNav();
   return { success: true };
 }
@@ -742,16 +787,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== GET USER ORDERS =====
 function getUserOrders() {
-  const user = getCurrentUser();
+  var user = getCurrentUser();
   if (!user) return [];
-  const users = getUsers();
-  const found = users.find(u => u.email === user.email);
+  var users = getUsers();
+  var found = users.find(function(u) { return u.email === user.email; });
   return found ? (found.orders || []) : [];
 }
 
 function getOrderById(orderId) {
-  const orders = getUserOrders();
-  return orders.find(o => o.id === orderId);
+  var orders = getUserOrders();
+  return orders.find(function(o) { return o.id === orderId; });
 }
 
 function updateOrderStatus(userEmail, orderId, newStatus) {
@@ -763,4 +808,23 @@ function updateOrderStatus(userEmail, orderId, newStatus) {
   order.status = newStatus;
   saveUsers(users);
   showToast('Order ' + orderId + ' updated to ' + newStatus);
+}
+
+function syncUsersFromFirestore(callback) {
+  if (typeof window.getFirestoreUsers !== 'function') {
+    if (callback) callback();
+    return;
+  }
+  window.getFirestoreUsers().then(function(users) {
+    if (users && users.length > 0) {
+      users.forEach(function(u) {
+        if (!u.cart) u.cart = [];
+        if (!u.orders) u.orders = [];
+      });
+      localStorage.setItem('gentifyUsers', JSON.stringify(users));
+    }
+    if (callback) callback();
+  }).catch(function() {
+    if (callback) callback();
+  });
 }

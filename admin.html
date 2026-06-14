@@ -186,10 +186,38 @@
 <script src="script.js" defer></script>
 <script>
 function loadAdminData() {
-  loadAdminStats();
-  loadProductsTable();
-  loadUsersTable();
-  loadAllOrders();
+  Promise.all([
+    loadProductsFromFirestore(),
+    typeof window.getFirestoreUsers === 'function' ? window.getFirestoreUsers() : Promise.resolve([])
+  ]).then(function(results) {
+    var prodResult = results[0];
+    var firestoreUsers = results[1];
+
+    if (prodResult && prodResult.data) {
+      localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
+      localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+      products = prodResult.data;
+      allProducts = getAllProductsFlat();
+    }
+
+    if (firestoreUsers && firestoreUsers.length > 0) {
+      firestoreUsers.forEach(function(u) {
+        if (!u.cart) u.cart = [];
+        if (!u.orders) u.orders = [];
+      });
+      localStorage.setItem('gentifyUsers', JSON.stringify(firestoreUsers));
+    }
+
+    loadAdminStats();
+    loadProductsTable();
+    loadUsersTable();
+    loadAllOrders();
+  }).catch(function() {
+    loadAdminStats();
+    loadProductsTable();
+    loadUsersTable();
+    loadAllOrders();
+  });
 }
 
 function loadAdminStats() {
@@ -284,8 +312,7 @@ function hideAddProductForm() {
   editingProductImages = null;
 }
 
-function syncToFirestoreAndReload() {
-  syncToFirestore(getProducts());
+function reloadAdminData() {
   hideAddProductForm();
   loadProductsTable();
   loadAdminStats();
@@ -361,7 +388,7 @@ function finishSaveProduct(name, category, price, desc, images, sizesStr, colors
     showToast('Product added successfully!');
   }
 
-  syncToFirestoreAndReload();
+  reloadAdminData();
 }
 
 function editProduct(id) {
@@ -391,7 +418,7 @@ function editProduct(id) {
 function deleteProductConfirm(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
   deleteProduct(id);
-  syncToFirestoreAndReload();
+  reloadAdminData();
   showToast('Product deleted.');
 }
 

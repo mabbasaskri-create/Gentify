@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
@@ -33,4 +33,25 @@ window.loadProductsFromFirestore = function() {
     if (snap.exists()) return snap.data();
     return null;
   });
+};
+
+// ===== USERS (Firestore) =====
+const USERS_COL = collection(db, "users");
+
+window.getFirestoreUsers = function() {
+  return getDocs(USERS_COL).then(function(snapshot) {
+    var users = [];
+    snapshot.forEach(function(d) { users.push(d.data()); });
+    return users;
+  });
+};
+
+window.getFirestoreUser = function(email) {
+  return getDoc(doc(db, "users", email)).then(function(snap) {
+    return snap.exists() ? snap.data() : null;
+  });
+};
+
+window.setFirestoreUser = function(email, data) {
+  return setDoc(doc(db, "users", email), data);
 };
