@@ -92,13 +92,17 @@ var DEFAULT_PRODUCTS = {
 
 function getProducts() {
   var stored = localStorage.getItem('gentifyProducts');
-  if (stored) return JSON.parse(stored);
-  saveProducts(DEFAULT_PRODUCTS);
-  return DEFAULT_PRODUCTS;
+  if (stored) {
+    var parsed = JSON.parse(stored);
+    if (Object.keys(parsed).length > 0) return parsed;
+  }
+  return {};
 }
 
 function saveProducts(prods) {
   localStorage.setItem('gentifyProducts', JSON.stringify(prods));
+  products = prods;
+  allProducts = getAllProductsFlat();
   if (typeof window.syncProductsToFirestore === 'function') {
     window.syncProductsToFirestore(prods).catch(function() {});
   }
@@ -159,7 +163,7 @@ function syncToFirestore(prods) {
 
 function syncFromFirestore(callback) {
   loadProductsFromFirestore().then(function(result) {
-    if (result && result.data) {
+    if (result && result.data && Object.keys(result.data).length > 0) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
       if (result.updated > localTS || !localStorage.getItem('gentifyProducts')) {
         localStorage.setItem('gentifyProductsTS', String(result.updated));
@@ -171,19 +175,25 @@ function syncFromFirestore(callback) {
         allProducts = getAllProductsFlat();
       }
     } else {
-      var current = getProducts();
-      products = current;
-      allProducts = getAllProductsFlat();
-      if (typeof window.syncProductsToFirestore === 'function') {
-        window.syncProductsToFirestore(current).then(function() {
-          localStorage.setItem('gentifyProductsTS', String(Date.now()));
-        }).catch(function() {});
+      var stored = localStorage.getItem('gentifyProducts');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (Object.keys(parsed).length > 0) {
+          products = parsed;
+          allProducts = getAllProductsFlat();
+        } else {
+          products = {};
+          allProducts = [];
+        }
+      } else {
+        products = {};
+        allProducts = [];
       }
     }
     if (callback) callback();
   }).catch(function() {
-    products = getProducts();
-    allProducts = getAllProductsFlat();
+    products = {};
+    allProducts = [];
     if (callback) callback();
   });
 }

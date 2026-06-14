@@ -200,11 +200,20 @@ function loadAdminData() {
     var prodResult = results[0];
     var firestoreUsers = results[1];
 
-    if (prodResult && prodResult.data) {
+    if (prodResult && prodResult.data && Object.keys(prodResult.data).length > 0) {
       localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
       localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
       products = prodResult.data;
       allProducts = getAllProductsFlat();
+    } else {
+      var stored = localStorage.getItem('gentifyProducts');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (Object.keys(parsed).length > 0) {
+          products = parsed;
+          allProducts = getAllProductsFlat();
+        }
+      }
     }
 
     if (firestoreUsers && firestoreUsers.length > 0) {
@@ -321,12 +330,11 @@ function hideAddProductForm() {
 
 function reloadAdminData() {
   hideAddProductForm();
+  var prods2 = getProducts();
+  products = prods2;
+  allProducts = getAllProductsFlat();
   loadProductsTable();
   loadAdminStats();
-  var prods2 = getProducts();
-  renderProducts(prods2.caps, 'capsGrid');
-  renderProducts(prods2.watches, 'watchesGrid');
-  renderProducts(prods2.wallets, 'walletsGrid');
 }
 
 function saveProductForm() {
