@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
@@ -54,4 +54,8 @@ window.getFirestoreUser = function(email) {
 
 window.setFirestoreUser = function(email, data) {
   return setDoc(doc(db, "users", email), data);
+};
+
+window.deleteFirestoreUser = function(email) {
+  return deleteDoc(doc(db, "users", email));
 };

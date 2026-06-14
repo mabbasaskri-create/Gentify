@@ -158,6 +158,13 @@
         </table>
       </div>
     </div>
+
+    <div class="admin-section" style="border:2px solid #e74c3c;border-radius:8px;padding:20px;margin-top:32px">
+      <h3 style="color:#e74c3c">&#x26A0; Danger Zone</h3>
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:12px">Delete all products, users, orders, and cart data from Firestore and localStorage. This cannot be undone.</p>
+      <button class="delete-btn" onclick="clearAllFirestoreData()" style="padding:10px 20px;font-size:0.9rem">Delete Everything</button>
+      <div id="clearLog" style="margin-top:10px;font-size:0.82rem;color:var(--gray)"></div>
+    </div>
   </div>
   <div id="adminLoginPrompt" style="display:none;text-align:center;padding:80px 20px">
     <div style="font-size:3rem;margin-bottom:16px">&#x1F512;</div>
@@ -460,6 +467,45 @@ function loadAllOrders() {
 function changeOrderStatus(userEmail, orderId, newStatus) {
   updateOrderStatus(userEmail, orderId, newStatus);
   loadAdminStats();
+}
+
+function clearAllFirestoreData() {
+  if (!confirm('Delete EVERYTHING from Firestore? This cannot be undone!')) return;
+  if (!confirm('Really? All products, users, orders, and cart data will be permanently deleted.')) return;
+
+  var log = document.getElementById('clearLog');
+  log.innerHTML = 'Clearing...';
+
+  var promises = [];
+
+  // Clear products catalog
+  if (typeof window.syncProductsToFirestore === 'function') {
+    promises.push(window.syncProductsToFirestore({}));
+  }
+
+  // Delete all user documents
+  if (typeof window.getFirestoreUsers === 'function' && typeof window.deleteFirestoreUser === 'function') {
+    promises.push(
+      window.getFirestoreUsers().then(function(users) {
+        return Promise.all(users.map(function(u) {
+          return u.email ? window.deleteFirestoreUser(u.email).catch(function() {}) : Promise.resolve();
+        }));
+      })
+    );
+  }
+
+  Promise.all(promises).then(function() {
+    localStorage.removeItem('gentifyProducts');
+    localStorage.removeItem('gentifyProductsTS');
+    localStorage.removeItem('gentifyUsers');
+    localStorage.removeItem('gentifyCurrentUser');
+    localStorage.removeItem('gentifyCart');
+    log.innerHTML = '<span style="color:#27ae60">All data cleared from Firestore and localStorage.</span>';
+    showToast('All data cleared!');
+    setTimeout(function() { location.reload(); }, 1500);
+  }).catch(function(e) {
+    log.innerHTML = '<span style="color:#c0392b">Error: ' + e.message + '</span>';
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
