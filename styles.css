@@ -1095,6 +1095,12 @@ footer {
   .nav-links a:last-child { border-bottom: none; }
   .hamburger { display: flex; z-index: 201; }
   .cart-label, .user-name, .user-label { display: none; }
+  nav > div[style*="display:flex"] { gap: 2px !important; }
+  .user-badge { background: none; padding: 4px; }
+  .user-badge:hover { background: none; }
+  .user-badge .avatar { width: 30px; height: 30px; font-size: 0.8rem; }
+  .cart-btn { background: none; color: var(--black); padding: 6px 8px; border-radius: 50%; min-width: auto; }
+  .cart-btn:hover { background: rgba(0,0,0,0.06); }
 
   .section { padding: 48px 4%; }
   #about { grid-template-columns: 1fr; gap: 40px; padding: 48px 4%; }
