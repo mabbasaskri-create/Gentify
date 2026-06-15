@@ -633,9 +633,15 @@ function subscribeNewsletter() {
 // ===== HAMBURGER =====
 document.addEventListener('DOMContentLoaded', () => {
   const hamburger = document.getElementById('hamburger');
-  if (hamburger) {
+  const navLinks = document.getElementById('navLinks');
+  if (hamburger && navLinks) {
+    var overlay = document.createElement('div');
+    overlay.className = 'nav-overlay';
+    overlay.onclick = function() { navLinks.classList.remove('open'); overlay.classList.remove('show'); };
+    document.body.appendChild(overlay);
     hamburger.addEventListener('click', () => {
-      document.getElementById('navLinks').classList.toggle('open');
+      navLinks.classList.toggle('open');
+      overlay.classList.toggle('show');
     });
   }
 });

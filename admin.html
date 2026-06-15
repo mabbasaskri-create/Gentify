@@ -43,6 +43,10 @@
     <div class="admin-header">
       <h2>Admin Panel</h2>
       <p class="admin-subtitle">Manage your store — products, users, and orders.</p>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="preview-btn" onclick="previewStore('desktop')">&#x1F5A5; View Desktop</button>
+        <button class="preview-btn" onclick="previewStore('mobile')">&#x1F4F1; View Mobile</button>
+      </div>
     </div>
 
     <div class="admin-stats">
@@ -514,6 +518,15 @@ function clearAllFirestoreData() {
   }).catch(function(e) {
     log.innerHTML = '<span style="color:#c0392b">Error: ' + e.message + '</span>';
   });
+}
+
+function previewStore(mode) {
+  var url = 'index.html';
+  if (mode === 'mobile') {
+    window.open(url, 'gentifyPreview', 'width=390,height=840,scrollbars=yes');
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
