@@ -697,6 +697,7 @@ footer {
 .user-link {
   text-decoration: none; color: var(--gray); font-size: 0.9rem; font-weight: 500;
   transition: color 0.2s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
 }
 .user-link:hover { color: var(--black); }
 .user-link.active { color: var(--black); font-weight: 600; }
@@ -1093,6 +1094,7 @@ footer {
   .nav-links a { padding: 12px 0; font-size: 1rem; border-bottom: 1px solid var(--border); }
   .nav-links a:last-child { border-bottom: none; }
   .hamburger { display: flex; z-index: 201; }
+  .cart-label, .user-name, .user-label { display: none; }
 
   .section { padding: 48px 4%; }
   #about { grid-template-columns: 1fr; gap: 40px; padding: 48px 4%; }

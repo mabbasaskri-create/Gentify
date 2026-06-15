@@ -726,7 +726,7 @@ function updateUserNav() {
     container.innerHTML = `
       <div class="user-badge" onclick="toggleUserDropdown()">
         <span class="avatar">${user.name.charAt(0).toUpperCase()}</span>
-        ${user.name.split(' ')[0]}
+        <span class="user-name">${user.name.split(' ')[0]}</span>
       </div>
       <div class="user-dropdown" id="userDropdown">
         ${isAdmin ? '<a href="admin.html">&#x1F6E1; Admin Panel</a>' : ''}
@@ -736,7 +736,7 @@ function updateUserNav() {
       </div>
     `;
   } else {
-    container.innerHTML = `<a href="login.html" class="user-link">Sign In</a>`;
+    container.innerHTML = `<a href="login.html" class="user-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="user-label">Sign In</span></a>`;
   }
 }
 
