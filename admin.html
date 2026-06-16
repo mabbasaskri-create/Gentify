@@ -64,7 +64,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon">&#x1F4B5;</div>
-        <div class="stat-num" id="statRevenue">$0</div>
+        <div class="stat-num" id="statRevenue">Rs. 0</div>
         <div class="stat-label">Total Revenue</div>
       </div>
       <div class="stat-card">
@@ -87,7 +87,7 @@
       <div class="admin-table-wrap">
         <table class="admin-table" id="productsTable">
           <thead>
-            <tr><th>Name</th><th>Category</th><th>Price</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Category</th><th>Price (PKR)</th><th>Actions</th></tr>
           </thead>
           <tbody id="productsBody"></tbody>
         </table>
@@ -111,7 +111,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Price ($)</label>
+            <label>Price (PKR)</label>
             <input type="number" id="apPrice" step="0.01" min="0" placeholder="0.00" />
           </div>
         </div>
@@ -170,7 +170,7 @@
       <div class="admin-table-wrap">
         <table class="admin-table" id="ordersTable">
           <thead>
-            <tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th></tr>
+            <tr><th>Order ID</th><th>Customer</th><th>Phone</th><th>Address</th><th>Items</th><th>Subtotal</th><th>Delivery</th><th>Total (PKR)</th><th>Payment</th><th>Date</th><th>Status</th></tr>
           </thead>
           <tbody id="ordersBody"></tbody>
         </table>
@@ -201,7 +201,7 @@
   <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
   <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
   <div class="cart-footer" id="cartFooter" style="display:none">
-    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">Rs. 0</span></div>
     <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
   </div>
 </div>
@@ -267,7 +267,7 @@ function loadAdminStats() {
     }
   });
   document.getElementById('statOrders').textContent = totalOrders;
-  document.getElementById('statRevenue').textContent = '$' + totalRevenue.toFixed(2);
+  document.getElementById('statRevenue').textContent = 'Rs. ' + Math.round(totalRevenue).toLocaleString('en-PK');
   document.getElementById('statUsers').textContent = users.length;
   document.getElementById('statProducts').textContent = getAllProductsFlat().length;
 }
@@ -280,7 +280,7 @@ function loadProductsTable() {
     return;
   }
   tbody.innerHTML = prods.map(function(p) {
-    return '<tr><td>' + p.name + '</td><td>' + p.category + '</td><td>$' + p.price.toFixed(2) + '</td><td>' +
+    return '<tr><td>' + p.name + '</td><td>' + p.category + '</td><td>Rs. ' + Math.round(p.price).toLocaleString('en-PK') + '</td><td>' +
       '<button class="edit-btn" onclick="editProduct(\'' + p.id + '\')">Edit</button> ' +
       '<button class="delete-btn" onclick="deleteProductConfirm(\'' + p.id + '\')">Delete</button></td></tr>';
   }).join('');
@@ -481,17 +481,31 @@ function loadAllOrders() {
     }
   });
   if (allOrders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:24px">No orders yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--gray);padding:24px">No orders yet.</td></tr>';
     return;
   }
   tbody.innerHTML = allOrders.map(function(item) {
     var o = item.order;
-    var statuses = ['processing', 'shipped', 'delivered', 'cancelled'];
+    var itemsStr = o.items ? o.items.map(function(i) { return i.name + ' x' + i.qty + ' (' + formatPrice(i.price) + ')'; }).join('<br>') : 'N/A';
+    var statuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
     var options = statuses.map(function(s) {
       return '<option value="' + s + '" ' + (o.status === s ? 'selected' : '') + '>' + s.charAt(0).toUpperCase() + s.slice(1) + '</option>';
     }).join('');
-    return '<tr><td>' + (o.id || 'N/A') + '</td><td>' + item.customer + '</td><td>$' + (o.total || 0).toFixed(2) + '</td><td>' +
-      '<select class="status-select ' + (o.status || 'processing') + '" onchange="changeOrderStatus(\'' + item.email + '\',\'' + o.id + '\',this.value)">' + options + '</select></td></tr>';
+    var statusClass = (o.status || 'Pending').toLowerCase();
+    return '<tr>' +
+      '<td>' + (o.id || 'N/A') + '</td>' +
+      '<td>' + (o.customerName || item.customer) + '</td>' +
+      '<td>' + (o.phone || '-') + '</td>' +
+      '<td>' + (o.address || '-') + '</td>' +
+      '<td style="font-size:0.82rem">' + itemsStr + '</td>' +
+      '<td>' + formatPrice(o.subtotal || 0) + '</td>' +
+      '<td>Rs. ' + (o.deliveryCharges || 300) + '</td>' +
+      '<td><strong>' + formatPrice(o.total || 0) + '</strong></td>' +
+      '<td>' + (o.paymentMethod || 'COD') + '</td>' +
+      '<td style="font-size:0.82rem">' + (o.date || '-') + '</td>' +
+      '<td>' +
+      '<select class="status-select ' + statusClass + '" onchange="changeOrderStatus(\'' + item.email + '\',\'' + o.id + '\',this.value)">' + options + '</select>' +
+      '</td></tr>';
   }).join('');
 }
 

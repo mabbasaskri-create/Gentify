@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Checkout — Gentify Essentials</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
+    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+  }
+}
+</script>
+<script type="module" src="firebase.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">GENTIFY<span>.</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="caps.html">Caps</a></li>
+    <li><a href="watches.html">Watches</a></li>
+    <li><a href="wallets.html">Wallets</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="returns.html">Returns</a></li>
+    <li><a href="cart.html">Cart</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="user-nav" id="userNav"></div>
+    <button class="cart-btn" id="cartBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-label">Cart</span> <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  <div class="nav-mobile-bottom" id="navMobileBottom">
+    <a href="caps.html">Caps</a>
+    <a href="watches.html">Watches</a>
+    <a href="wallets.html">Wallets</a>
+    <a href="about.html">About</a>
+    <a href="returns.html">Returns</a>
+  </div>
+</nav>
+
+<div class="checkout-page" id="checkoutPage">
+  <div id="checkoutContent">
+    <h2>Checkout</h2>
+    <div class="checkout-layout">
+      <div class="checkout-form-section">
+        <div class="checkout-form">
+          <h3>Shipping Information</h3>
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" id="coFullName" placeholder="John Doe" />
+            <div class="field-error" id="coFullNameError"></div>
+          </div>
+          <div class="form-group">
+            <label>Phone Number <span class="required">*</span></label>
+            <input type="tel" id="coPhone" placeholder="03XXXXXXXXX or +923XXXXXXXXX" />
+            <div class="field-error" id="coPhoneError"></div>
+          </div>
+          <div class="form-group">
+            <label>Email Address <span class="required">*</span></label>
+            <input type="email" id="coEmail" placeholder="your@email.com" />
+            <div class="field-error" id="coEmailError"></div>
+          </div>
+          <div class="form-group">
+            <label>Full Address <span class="required">*</span></label>
+            <textarea id="coAddress" placeholder="House #, Street, Area, City" rows="3"></textarea>
+            <div class="field-error" id="coAddressError"></div>
+          </div>
+          <div class="form-row2">
+            <div class="form-group">
+              <label>City <span class="required">*</span></label>
+              <input type="text" id="coCity" placeholder="Lahore" />
+              <div class="field-error" id="coCityError"></div>
+            </div>
+            <div class="form-group">
+              <label>Postal Code <span class="required">*</span></label>
+              <input type="text" id="coPostalCode" placeholder="54000" />
+              <div class="field-error" id="coPostalCodeError"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Order Notes</label>
+            <textarea id="coNotes" placeholder="Any special instructions..." rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Additional Instructions</label>
+            <textarea id="coInstructions" placeholder="Delivery instructions, gate code, etc." rows="2"></textarea>
+          </div>
+
+          <div class="checkout-payment">
+            <h3>Payment Method</h3>
+            <div class="payment-option selected">
+              <input type="radio" name="payment" id="codPayment" checked />
+              <label for="codPayment">
+                <strong>Cash on Delivery (COD)</strong>
+                <span>Pay when you receive your order</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="checkout-summary-section">
+        <div class="checkout-summary">
+          <h3>Order Summary</h3>
+          <div id="checkoutItems"></div>
+          <div class="checkout-summary-rows">
+            <div class="summary-row">
+              <span class="summary-label">Subtotal</span>
+              <span class="summary-val" id="coSubtotal">Rs. 0</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Delivery Charges</span>
+              <span class="summary-val" id="coDelivery">Rs. 300</span>
+            </div>
+            <div class="summary-row checkout-total">
+              <span class="summary-label">Grand Total</span>
+              <span class="val" id="coGrandTotal">Rs. 0</span>
+            </div>
+          </div>
+          <button class="checkout-btn" onclick="placeOrder()" id="placeOrderBtn">Place Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="checkoutEmpty" style="display:none">
+    <div class="cart-empty-state">
+      <div class="empty-icon">&#x1F6CD;</div>
+      <h3>Your cart is empty</h3>
+      <p>Add some products before checking out.</p>
+      <a href="caps.html" class="hero-cta" style="display:inline-block">Start Shopping</a>
+    </div>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">Rs. 0</span></div>
+    <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js" defer></script>
+<script>
+var DELIVERY_CHARGE = 300;
+
+function validatePakistaniPhone(phone) {
+  var cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  return /^03\d{9}$/.test(cleaned) || /^\+92\d{10}$/.test(cleaned) || /^92\d{10}$/.test(cleaned);
+}
+
+function normalizePhone(phone) {
+  var cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (cleaned.startsWith('+92')) return '0' + cleaned.slice(3);
+  if (cleaned.startsWith('92') && cleaned.length === 12) return '0' + cleaned.slice(2);
+  return cleaned;
+}
+
+function renderCheckout() {
+  var user = getCurrentUser();
+  if (!user) {
+    window.location.href = 'login.html?redirect=checkout.html';
+    return;
+  }
+  if (cart.length === 0) {
+    document.getElementById('checkoutContent').style.display = 'none';
+    document.getElementById('checkoutEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('checkoutContent').style.display = 'block';
+  document.getElementById('checkoutEmpty').style.display = 'none';
+
+  if (user && user.email) {
+    var users = getUsers();
+    var found = users.find(function(u) { return u.email === user.email; });
+    if (found) {
+      document.getElementById('coFullName').value = found.name || '';
+      document.getElementById('coEmail').value = found.email || '';
+    } else {
+      document.getElementById('coFullName').value = user.name || '';
+      document.getElementById('coEmail').value = user.email || '';
+    }
+  }
+
+  var itemsContainer = document.getElementById('checkoutItems');
+  itemsContainer.innerHTML = cart.map(function(item) {
+    return '<div class="checkout-item">' +
+      '<img src="' + item.images[0] + '" alt="' + item.name + '" />' +
+      '<div class="checkout-item-info">' +
+      '<div class="checkout-item-name">' + item.name + '</div>' +
+      '<div class="checkout-item-opts">' + [item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ') + '</div>' +
+      '<div class="checkout-item-qty">Qty: ' + item.qty + '</div>' +
+      '</div>' +
+      '<div class="checkout-item-price">' + formatPrice(item.price * item.qty) + '</div>' +
+      '</div>';
+  }).join('');
+
+  updateCheckoutSummary();
+}
+
+function updateCheckoutSummary() {
+  var subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var grandTotal = subtotal + DELIVERY_CHARGE;
+  document.getElementById('coSubtotal').textContent = formatPrice(subtotal);
+  document.getElementById('coDelivery').textContent = 'Rs. ' + DELIVERY_CHARGE;
+  document.getElementById('coGrandTotal').textContent = formatPrice(grandTotal);
+}
+
+function clearFieldErrors() {
+  var errors = document.querySelectorAll('.field-error');
+  errors.forEach(function(el) { el.textContent = ''; el.style.display = 'none'; });
+  var inputs = document.querySelectorAll('.checkout-form input, .checkout-form textarea');
+  inputs.forEach(function(el) { el.classList.remove('input-error'); });
+}
+
+function showFieldError(id, message) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  var inputId = id.replace('Error', '');
+  var input = document.getElementById(inputId);
+  if (input) input.classList.add('input-error');
+}
+
+function placeOrder() {
+  clearFieldErrors();
+
+  var fullName = document.getElementById('coFullName').value.trim();
+  var phone = document.getElementById('coPhone').value.trim();
+  var email = document.getElementById('coEmail').value.trim();
+  var address = document.getElementById('coAddress').value.trim();
+  var city = document.getElementById('coCity').value.trim();
+  var postalCode = document.getElementById('coPostalCode').value.trim();
+  var orderNotes = document.getElementById('coNotes').value.trim();
+  var additionalInstructions = document.getElementById('coInstructions').value.trim();
+
+  var hasError = false;
+
+  if (!fullName) {
+    showFieldError('coFullNameError', 'Please enter your full name.');
+    hasError = true;
+  }
+  if (!phone) {
+    showFieldError('coPhoneError', 'Please enter your phone number.');
+    hasError = true;
+  } else if (!validatePakistaniPhone(phone)) {
+    showFieldError('coPhoneError', 'Please enter a valid Pakistani phone number.');
+    hasError = true;
+  }
+  if (!email) {
+    showFieldError('coEmailError', 'Please enter your email address.');
+    hasError = true;
+  } else if (!email.includes('@') || !email.includes('.')) {
+    showFieldError('coEmailError', 'Please enter a valid email address.');
+    hasError = true;
+  }
+  if (!address) {
+    showFieldError('coAddressError', 'Please enter your full address.');
+    hasError = true;
+  }
+  if (!city) {
+    showFieldError('coCityError', 'Please enter your city.');
+    hasError = true;
+  }
+  if (!postalCode) {
+    showFieldError('coPostalCodeError', 'Please enter your postal code.');
+    hasError = true;
+  }
+
+  if (hasError) {
+    document.querySelector('.checkout-form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  var user = getCurrentUser();
+  if (!user) {
+    showToast('Please sign in to place an order.');
+    window.location.href = 'login.html?redirect=checkout.html';
+    return;
+  }
+
+  var subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var grandTotal = subtotal + DELIVERY_CHARGE;
+
+  var now = new Date();
+  var orderId = 'ORD-' + now.getTime().toString(36).toUpperCase();
+
+  var orderItems = cart.map(function(item) {
+    return {
+      id: item.id,
+      name: item.name,
+      img: item.images[0],
+      qty: item.qty,
+      price: item.price,
+      color: item.selectedColor,
+      size: item.selectedSize
+    };
+  });
+
+  var order = {
+    id: orderId,
+    customerName: fullName,
+    phone: normalizePhone(phone),
+    email: email,
+    address: address,
+    city: city,
+    postalCode: postalCode,
+    orderNotes: orderNotes,
+    additionalInstructions: additionalInstructions,
+    date: now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    dateTime: now.toISOString(),
+    items: orderItems,
+    subtotal: subtotal,
+    deliveryCharges: DELIVERY_CHARGE,
+    total: grandTotal,
+    paymentMethod: 'Cash on Delivery',
+    status: 'pending',
+    tracking: '',
+    timeline: [
+      { time: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Order placed' }
+    ]
+  };
+
+  document.getElementById('placeOrderBtn').disabled = true;
+  document.getElementById('placeOrderBtn').textContent = 'Placing Order...';
+
+  var users = getUsers();
+  var userIdx = users.findIndex(function(u) { return u.email === user.email; });
+  if (userIdx >= 0) {
+    if (!users[userIdx].orders) users[userIdx].orders = [];
+    users[userIdx].orders.push(order);
+    users[userIdx].cart = [];
+    saveUsers(users);
+  } else {
+    users.push({
+      uid: user.uid || null,
+      name: fullName,
+      email: email,
+      password: 'firebase_managed',
+      orders: [order],
+      cart: []
+    });
+    saveUsers(users);
+  }
+
+  cart = [];
+  saveCart();
+  updateCartUI();
+
+  showToast('Order placed successfully! Thank you for your purchase.');
+
+  setTimeout(function() {
+    window.location.href = 'orders.html?success=' + orderId;
+  }, 1500);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderCheckout();
+});
+</script>
+</body>
+</html>

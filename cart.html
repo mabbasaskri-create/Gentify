@@ -53,15 +53,10 @@
   <div class="cart-summary" id="cartSummary">
     <h3>Order Summary</h3>
     <div id="summaryContent">
-      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-val" id="summarySubtotal">$0.00</span></div>
-      <div class="summary-row"><span class="summary-label">Shipping</span><span class="summary-val" id="summaryShipping">Free</span></div>
-      <div class="summary-row"><span class="summary-label">Tax</span><span class="summary-val" id="summaryTax">$0.00</span></div>
-      <div class="coupon-form">
-        <input type="text" placeholder="Coupon code" id="couponInput" />
-        <button onclick="applyCoupon()">Apply</button>
-      </div>
-      <div class="summary-row total"><span class="summary-label">Total</span><span class="val" id="summaryTotal">$0.00</span></div>
-      <button class="checkout-btn" onclick="checkoutCart()">Proceed to Checkout &rarr;</button>
+      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-val" id="summarySubtotal">Rs. 0</span></div>
+      <div class="summary-row"><span class="summary-label">Delivery Charges</span><span class="summary-val" id="summaryShipping">Rs. 300</span></div>
+      <div class="summary-row total"><span class="summary-label">Grand Total</span><span class="val" id="summaryTotal">Rs. 0</span></div>
+      <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
     </div>
   </div>
 </div>
@@ -72,7 +67,7 @@
   <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
   <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
   <div class="cart-footer" id="cartFooter" style="display:none">
-    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">Rs. 0</span></div>
     <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
   </div>
 </div>
@@ -120,7 +115,7 @@ function renderCartPage() {
       <div class="cart-page-item-info">
         <h4>${item.name}</h4>
         <div class="item-options">${[item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ')}</div>
-        <div class="item-price">$${item.price.toFixed(2)}</div>
+        <div class="item-price">${formatPrice(item.price)}</div>
       </div>
       <div class="cart-page-item-actions">
         <div class="qty-controls">
@@ -147,37 +142,14 @@ function cartPageRemove(cartKey) {
 
 function updateCartSummary() {
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const delivery = DELIVERY_CHARGES || 300;
+  const total = subtotal + delivery;
   const subEl = document.getElementById('summarySubtotal');
-  const taxEl = document.getElementById('summaryTax');
+  const delEl = document.getElementById('summaryShipping');
   const totalEl = document.getElementById('summaryTotal');
-  if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
-  if (taxEl) taxEl.textContent = '$' + tax.toFixed(2);
-  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
-}
-
-let couponApplied = false;
-function applyCoupon() {
-  const input = document.getElementById('couponInput');
-  if (!input || couponApplied) return;
-  const code = input.value.trim().toUpperCase();
-  if (code === 'GENTIFY10') {
-    showToast('Coupon applied! 10% discount.');
-    couponApplied = true;
-    input.value = '';
-    input.disabled = true;
-    updateCartSummary();
-  } else {
-    showToast('Invalid coupon code.');
-  }
-}
-
-function checkoutCart() {
-  if (cart.length === 0) { showToast('Your cart is empty.'); return; }
-  if (!isLoggedIn()) { window.location.href = 'login.html?redirect=cart.html'; return; }
-  showToast('Order placed! Redirecting to orders...');
-  setTimeout(() => { window.location.href = 'orders.html'; }, 1000);
+  if (subEl) subEl.textContent = formatPrice(subtotal);
+  if (delEl) delEl.textContent = 'Rs. ' + delivery;
+  if (totalEl) totalEl.textContent = formatPrice(total);
 }
 
 document.addEventListener('DOMContentLoaded', renderCartPage);

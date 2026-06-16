@@ -55,7 +55,7 @@
   <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
   <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
   <div class="cart-footer" id="cartFooter" style="display:none">
-    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">Rs. 0</span></div>
     <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
   </div>
 </div>
@@ -102,8 +102,8 @@ function renderTracking() {
     container.innerHTML = '<div class="orders-empty"><div class="empty-icon">&#x1F50D;</div><h3>Order not found</h3><p>We couldn\'t find order ' + (orderId || '') + '.</p><a href="orders.html" class="hero-cta" style="display:inline-block">View All Orders</a></div>';
     return;
   }
-  const stepNames = ['Ordered', 'Confirmed', 'Processed', 'Shipped', 'Delivered'];
-  const stepIndex = order.status === 'delivered' ? 4 : order.status === 'shipped' ? 3 : order.status === 'processing' ? 2 : 1;
+  const statusMap = { 'pending': 1, 'confirmed': 2, 'shipped': 3, 'delivered': 4, 'processing': 2, 'cancelled': -1 };
+  const stepIndex = statusMap[(order.status || 'pending').toLowerCase()] || 1;
   const progressPct = (stepIndex / 4) * 100;
 
   container.innerHTML = `
@@ -121,10 +121,10 @@ function renderTracking() {
     <div class="track-details">
       <h3>Order Details</h3>
       <div class="detail-row"><span class="detail-label">Order ID</span><span class="detail-value">${order.id}</span></div>
-      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${order.status === 'delivered' ? '#2e7d32' : order.status === 'shipped' ? '#1565c0' : '#e65100'}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${order.status}</span></div>
       <div class="detail-row"><span class="detail-label">Tracking Number</span><span class="detail-value">${order.tracking}</span></div>
       <div class="detail-row"><span class="detail-label">Items</span><span class="detail-value">${order.items.length} item(s)</span></div>
-      <div class="detail-row"><span class="detail-label">Total</span><span class="detail-value">$${order.total.toFixed(2)}</span></div>
+      <div class="detail-row"><span class="detail-label">Total</span><span class="detail-value">${formatPrice(order.total)}</span></div>
       <div class="track-timeline">
         <h3 style="margin-top:16px">Timeline</h3>
         ${order.timeline.map((t, i) => `

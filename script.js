@@ -47,44 +47,44 @@ window.onAuthStateChanged(function(firebaseUser) {
 // ===== PRODUCT DATA =====
 var DEFAULT_PRODUCTS = {
   caps: [
-    { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 29.99, badge: null, premium: false, category: 'Caps',
+    { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 8399, badge: null, premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'White', hex: '#F5F5F0' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 32.00, badge: 'Popular', premium: false, category: 'Caps',
+    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 8999, badge: 'Popular', premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80','https://images.unsplash.com/photo-1595433707800-5b393e94297a?w=600&q=80','https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Beige', hex: '#D4C5A9' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Olive', hex: '#4A5D23' }] },
-    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 34.50, badge: null, premium: false, category: 'Caps',
+    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 9699, badge: null, premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80','https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80'],
       sizes: ['M', 'L', 'XL'], colors: [{ name: 'Navy', hex: '#1B2A4A' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Gray', hex: '#6B6B6B' }] },
-    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 36.00, badge: 'New', premium: false, category: 'Caps',
+    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 9999, badge: 'New', premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Olive', hex: '#4A5D23' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   watches: [
-    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 249.00, badge: 'Best Seller', premium: true, category: 'Watches',
+    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 69999, badge: 'Best Seller', premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 179.00, badge: null, premium: false, category: 'Watches',
+    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 49999, badge: null, premium: false, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80','https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Silver', hex: '#C0C0C0' }] },
-    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 199.00, badge: null, premium: true, category: 'Watches',
+    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 55999, badge: null, premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80','https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80'],
       sizes: ['Standard'], colors: [{ name: 'Silver', hex: '#C0C0C0' }, { name: 'Gold', hex: '#C8965A' }] },
-    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 329.00, badge: 'Premium', premium: true, category: 'Watches',
+    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 92999, badge: 'Premium', premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#5C3A1E' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   wallets: [
-    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 79.00, badge: 'Best Seller', premium: true, category: 'Wallets',
+    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 22999, badge: 'Best Seller', premium: true, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
       sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Tan', hex: '#C4A882' }] },
-    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 49.00, badge: null, premium: false, category: 'Wallets',
+    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 13999, badge: null, premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'],
       sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 89.00, badge: 'New', premium: false, category: 'Wallets',
+    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 24999, badge: 'New', premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80','https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80'],
       sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 65.00, badge: null, premium: false, category: 'Wallets',
+    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 18999, badge: null, premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
       sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }] }
   ]
@@ -113,6 +113,10 @@ function getAllProductsFlat() {
   var flat = [];
   Object.keys(prods).forEach(function(k) { flat = flat.concat(prods[k]); });
   return flat;
+}
+
+function formatPrice(amount) {
+  return 'Rs. ' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function addProduct(product) {
@@ -215,6 +219,7 @@ function syncFromFirestore(callback) {
 
 // ===== CART STATE =====
 let cart = JSON.parse(localStorage.getItem('gentifyCart') || '[]');
+var DELIVERY_CHARGES = 300;
 
 // ===== DETAIL STATE =====
 let detailProduct = null;
@@ -227,7 +232,7 @@ let detailCurrentImage = 0;
 function renderProducts(list, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = list.map(p => `
+      container.innerHTML = list.map(p => `
     <div class="product-card" onclick="openProductDetail('${p.id}')">
       <div class="product-img-wrap">
         <img src="${p.images[0]}" alt="${p.name}" loading="lazy" />
@@ -237,7 +242,7 @@ function renderProducts(list, containerId) {
         <div class="product-name">${p.name}</div>
         <div class="product-desc">${p.desc}</div>
         <div class="product-footer">
-          <span class="product-price">$${p.price.toFixed(2)}</span>
+          <span class="product-price">${formatPrice(p.price)}</span>
           <button class="add-btn" onclick="event.stopPropagation(); quickAdd('${p.id}')">Add to Cart</button>
         </div>
       </div>
@@ -273,7 +278,7 @@ function openProductDetail(id) {
 
   document.getElementById('detailCategory').textContent = product.category;
   document.getElementById('detailName').textContent = product.name;
-  document.getElementById('detailPrice').textContent = '$' + product.price.toFixed(2);
+  document.getElementById('detailPrice').textContent = formatPrice(product.price);
   document.getElementById('detailDesc').textContent = product.desc;
   document.getElementById('detailQty').textContent = '1';
 
@@ -362,7 +367,7 @@ function detailQtyChange(delta) {
 function updateDetailAddBtn() {
   const btn = document.getElementById('detailAddBtn');
   if (!detailProduct) return;
-  btn.textContent = 'Add to Cart \u2014 $' + (detailProduct.price * detailQty).toFixed(2);
+  btn.textContent = 'Add to Cart \u2014 ' + formatPrice(detailProduct.price * detailQty);
 }
 
 function detailAddToCart() {
@@ -396,7 +401,7 @@ function renderProductDetailPage(id) {
 
   document.getElementById('pdBreadcrumb').innerHTML = '<a href="' + pdProduct.category.toLowerCase() + '.html">' + pdProduct.category + '</a> <span class="pd-breadcrumb-sep">/</span> <span>' + pdProduct.name + '</span>';
   document.getElementById('pdName').textContent = pdProduct.name;
-  document.getElementById('pdPrice').textContent = '$' + pdProduct.price.toFixed(2);
+  document.getElementById('pdPrice').textContent = formatPrice(pdProduct.price);
   document.getElementById('pdDesc').textContent = pdProduct.desc;
   document.getElementById('pdQty').textContent = '1';
 
@@ -497,7 +502,7 @@ function pdQtyChange(delta) {
 function updatePdAddBtn() {
   var btn = document.getElementById('pdAddBtn');
   if (!pdProduct) return;
-  btn.textContent = 'Add to Cart \u2014 $' + (pdProduct.price * pdQty).toFixed(2);
+  btn.textContent = 'Add to Cart \u2014 ' + formatPrice(pdProduct.price * pdQty);
 }
 
 function pdAddToCart() {
@@ -543,7 +548,7 @@ function updateCartUI() {
   const footerEl = document.getElementById('cartFooter');
 
   if (countEl) countEl.textContent = count;
-  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+  if (totalEl) totalEl.textContent = formatPrice(total);
   if (!itemsEl) return;
 
   if (cart.length === 0) {
@@ -557,7 +562,7 @@ function updateCartUI() {
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           <div class="cart-item-options">${[item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ')}</div>
-          <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+          <div class="cart-item-price">${formatPrice(item.price * item.qty)}</div>
           <div class="cart-item-qty">
             <button class="qty-btn" onclick="changeQty('${item.cartKey}', -1)">&minus;</button>
             <span class="qty-num">${item.qty}</span>
@@ -607,8 +612,19 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function checkout() {
-  showToast('Redirecting to checkout\u2026 (demo mode)');
-  setTimeout(closeCart, 800);
+  closeCart();
+  if (!isLoggedIn()) {
+    var current = window.location.pathname.split('/').pop();
+    window.location.href = 'login.html?redirect=' + current;
+    return;
+  }
+  window.location.href = 'checkout.html';
+}
+
+function checkoutCart() {
+  if (cart.length === 0) { showToast('Your cart is empty.'); return; }
+  if (!isLoggedIn()) { window.location.href = 'login.html?redirect=checkout.html'; return; }
+  window.location.href = 'checkout.html';
 }
 
 // ===== TOAST =====
@@ -757,38 +773,52 @@ document.addEventListener('click', (e) => {
 });
 
 function generateMockOrders(name, email) {
-  const now = Date.now();
-  const products_list = [...products.caps, ...products.watches, ...products.wallets];
-  const statuses = ['delivered', 'shipped', 'processing'];
-  const orders = [];
-  for (let i = 1; i <= 3; i++) {
-    const items = [];
-    const count = Math.floor(Math.random() * 2) + 1;
-    let total = 0;
-    for (let j = 0; j < count; j++) {
-      const p = products_list[Math.floor(Math.random() * products_list.length)];
-      const qty = Math.floor(Math.random() * 2) + 1;
-      const color = p.colors ? p.colors[0].name : null;
-      const size = p.sizes ? p.sizes[0] : null;
-      items.push({ id: p.id, name: p.name, img: p.images[0], qty, price: p.price, color, size });
-      total += p.price * qty;
+  var now = Date.now();
+  var products_list = getAllProductsFlat();
+  if (products_list.length === 0) return [];
+  var statuses = ['Delivered', 'Shipped', 'Pending'];
+  var orders = [];
+  for (var i = 1; i <= 3; i++) {
+    var items = [];
+    var count = Math.floor(Math.random() * 2) + 1;
+    var subtotal = 0;
+    for (var j = 0; j < count; j++) {
+      var p = products_list[Math.floor(Math.random() * products_list.length)];
+      var qty = Math.floor(Math.random() * 2) + 1;
+      var color = p.colors ? p.colors[0].name : null;
+      var size = p.sizes ? p.sizes[0] : null;
+      items.push({ id: p.id, name: p.name, img: p.images[0], qty: qty, price: p.price, color: color, size: size });
+      subtotal += p.price * qty;
     }
-    const status = statuses[Math.min(i - 1, statuses.length - 1)];
-    const daysAgo = (i - 1) * 14 + Math.floor(Math.random() * 7);
-    const date = new Date(now - daysAgo * 86400000);
+    var status = statuses[Math.min(i - 1, statuses.length - 1)];
+    var daysAgo = (i - 1) * 14 + Math.floor(Math.random() * 7);
+    var date = new Date(now - daysAgo * 86400000);
+    var deliveryCharges = 300;
+    var total = subtotal + deliveryCharges;
     orders.push({
       id: 'ORD-' + String(1000 + i).slice(-4),
+      customerName: name || 'Customer',
+      phone: '03123456789',
+      email: email,
+      address: '123 Main Street, Lahore',
+      city: 'Lahore',
+      postalCode: '54000',
+      orderNotes: '',
+      additionalInstructions: '',
       date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-      total,
-      items,
-      status,
+      dateTime: date.toISOString(),
+      items: items,
+      subtotal: subtotal,
+      deliveryCharges: deliveryCharges,
+      total: total,
+      paymentMethod: 'Cash on Delivery',
+      status: status,
       tracking: '1Z' + Math.random().toString(36).slice(2, 10).toUpperCase(),
       timeline: [
         { time: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Order placed' },
-        { time: new Date(date.getTime() + 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Payment confirmed' },
-        { time: new Date(date.getTime() + 2 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Order processed' },
-        status !== 'processing' ? { time: new Date(date.getTime() + 3 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: status === 'delivered' ? 'Delivered' : 'Shipped' } : null,
-        status === 'delivered' ? { time: new Date(date.getTime() + 5 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Delivered successfully' } : null,
+        { time: new Date(date.getTime() + 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Order confirmed' },
+        status !== 'Pending' ? { time: new Date(date.getTime() + 2 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Order shipped' } : null,
+        status === 'Delivered' ? { time: new Date(date.getTime() + 4 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), text: 'Delivered successfully' } : null,
       ].filter(Boolean)
     });
   }
@@ -822,8 +852,13 @@ function updateOrderStatus(userEmail, orderId, newStatus) {
   var order = user.orders.find(function(o) { return o.id === orderId; });
   if (!order) return;
   order.status = newStatus;
+  if (!order.timeline) order.timeline = [];
+  order.timeline.push({
+    time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    text: 'Order ' + newStatus
+  });
   saveUsers(users);
-  showToast('Order ' + orderId + ' updated to ' + newStatus);
+  showToast('Order ' + orderId + ' updated to ' + newStatus.charAt(0).toUpperCase() + newStatus.slice(1));
 }
 
 function syncUsersFromFirestore(callback) {
@@ -836,6 +871,19 @@ function syncUsersFromFirestore(callback) {
       users.forEach(function(u) {
         if (!u.cart) u.cart = [];
         if (!u.orders) u.orders = [];
+        if (u.orders) {
+          u.orders.forEach(function(o) {
+            if (!o.customerName) o.customerName = u.name || 'Customer';
+            if (!o.phone) o.phone = 'N/A';
+            if (!o.address) o.address = 'N/A';
+            if (!o.paymentMethod) o.paymentMethod = 'Cash on Delivery';
+            if (!o.deliveryCharges) o.deliveryCharges = 300;
+            if (!o.subtotal) o.subtotal = o.total || 0;
+            if (!o.city) o.city = '';
+            if (!o.postalCode) o.postalCode = '';
+            if (o.status === 'processing') o.status = 'pending';
+          });
+        }
       });
       localStorage.setItem('gentifyUsers', JSON.stringify(users));
     }
@@ -843,4 +891,61 @@ function syncUsersFromFirestore(callback) {
   }).catch(function() {
     if (callback) callback();
   });
+}
+
+// ===== PLACE ORDER =====
+var DELIVERY_CHARGES = 300;
+
+function placeOrder(checkoutData) {
+  var user = getCurrentUser();
+  if (!user) { showToast('Please sign in to place an order.'); return; }
+
+  var users = getUsers();
+  var userData = users.find(function(u) { return u.email === user.email; });
+  if (!userData) { showToast('User data not found.'); return; }
+
+  if (!userData.orders) userData.orders = [];
+
+  var subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var total = subtotal + DELIVERY_CHARGES;
+
+  var orderId = 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + String(userData.orders.length + 1).padStart(3, '0');
+
+  var order = {
+    id: orderId,
+    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    customerName: checkoutData.fullName,
+    phone: checkoutData.phone,
+    email: checkoutData.email,
+    address: checkoutData.address,
+    city: checkoutData.city || '',
+    postalCode: checkoutData.postalCode || '',
+    orderNotes: checkoutData.orderNotes || '',
+    additionalInstructions: checkoutData.additionalInstructions || '',
+    items: cart.map(function(item) {
+      return {
+        id: item.id,
+        name: item.name,
+        img: item.images[0],
+        qty: item.qty,
+        price: item.price,
+        color: item.selectedColor,
+        size: item.selectedSize
+      };
+    }),
+    subtotal: subtotal,
+    deliveryCharges: DELIVERY_CHARGES,
+    total: total,
+    paymentMethod: 'Cash on Delivery',
+    status: 'Pending'
+  };
+
+  userData.orders.push(order);
+  saveUsers(users);
+
+  cart = [];
+  saveCart();
+  updateCartUI();
+
+  return order;
 }

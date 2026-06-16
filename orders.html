@@ -55,7 +55,7 @@
   <div class="cart-header"><h2>Your Cart</h2><button class="close-cart" onclick="closeCart()">&times;</button></div>
   <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="empty-icon">&#x1F6CD;</div><p>Your cart is empty.<br>Start adding some essentials.</p></div></div>
   <div class="cart-footer" id="cartFooter" style="display:none">
-    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">$0.00</span></div>
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cartTotal">Rs. 0</span></div>
     <button class="checkout-btn" onclick="checkout()">Proceed to Checkout &rarr;</button>
   </div>
 </div>
@@ -102,7 +102,7 @@ function renderOrders() {
   }
   container.innerHTML = '<h2>My Orders</h2><p class="orders-subtitle">View and track all your orders.</p>' +
     orders.map(o => {
-      const statusClass = o.status;
+      const statusClass = (o.status || 'Pending').toLowerCase();
       const statusLabel = o.status.charAt(0).toUpperCase() + o.status.slice(1);
       return `
       <div class="order-card">
@@ -119,13 +119,16 @@ function renderOrders() {
               <img src="${item.img}" alt="${item.name}" />
               <div>
                 <div class="item-name">${item.name}</div>
-                <div class="item-qty">Qty: ${item.qty} &middot; $${item.price.toFixed(2)}</div>
+                <div class="item-qty">Qty: ${item.qty} &middot; ${formatPrice(item.price)}</div>
               </div>
             </div>
           `).join('')}
         </div>
         <div class="order-card-footer">
-          <div class="order-total">Total: <span>$${o.total.toFixed(2)}</span></div>
+          <div>
+            <div style="font-size:0.82rem;color:var(--gray)">Subtotal: ${formatPrice(o.subtotal || o.total)} &middot; Delivery: Rs. ${o.deliveryCharges || 300}</div>
+            <div class="order-total" style="margin-top:4px">Total: <span>${formatPrice(o.total)}</span></div>
+          </div>
           <a href="track-order.html?id=${o.id}" class="track-btn">Track Order</a>
         </div>
       </div>`;
