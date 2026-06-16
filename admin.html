@@ -121,9 +121,16 @@
         </div>
         <div class="form-group">
           <label>Product Images</label>
-          <input type="file" id="apImages" accept="image/*" multiple />
-          <small style="color:var(--gray);font-size:0.82rem">Select one or more images from your device.</small>
           <div id="apImagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Images<input type="file" id="apImages" accept="image/*" multiple style="display:none" /></label>
+            <button type="button" class="url-btn" onclick="toggleUrlInput()" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
+          </div>
+          <div id="apUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
+            <input type="text" id="apImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
+            <button onclick="addUrlImage()" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
+          </div>
+          <small style="color:var(--gray);font-size:0.82rem">Add as many images as you want via file upload or URL. Click &times; to remove an image.</small>
         </div>
         <div class="form-row2">
           <div class="form-group">
@@ -288,6 +295,26 @@ function loadProductsTable() {
 
 var editingProductId = null;
 var editingProductImages = null;
+var pendingImages = [];
+
+function renderPendingImages() {
+  var preview = document.getElementById('apImagePreview');
+  if (pendingImages.length === 0) {
+    preview.innerHTML = '<span style="color:var(--gray);font-size:0.85rem">No images added yet.</span>';
+    return;
+  }
+  preview.innerHTML = pendingImages.map(function(img, i) {
+    return '<div style="position:relative;width:64px;height:64px;border-radius:6px;overflow:hidden;border:1.5px solid var(--border);flex-shrink:0">' +
+      '<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" />' +
+      '<button onclick="removePendingImage('+i+')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;border:none;background:#dc2626;color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0">&times;</button>' +
+      '</div>';
+  }).join('');
+}
+
+function removePendingImage(idx) {
+  pendingImages.splice(idx, 1);
+  renderPendingImages();
+}
 
 function filesToBase64(files) {
   return new Promise(function(resolve) {
@@ -306,25 +333,32 @@ function filesToBase64(files) {
   });
 }
 
-function imagePreviewFromFiles(files, previewEl) {
-  previewEl.innerHTML = '';
-  if (!files || files.length === 0) { previewEl.style.display = 'none'; return; }
-  previewEl.style.display = 'flex';
-  Array.from(files).forEach(function(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var div = document.createElement('div');
-      div.style.cssText = 'width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)';
-      div.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover" />';
-      previewEl.appendChild(div);
-    };
-    reader.readAsDataURL(file);
+function addFilesToPending(files) {
+  filesToBase64(files).then(function(images) {
+    pendingImages = pendingImages.concat(images);
+    renderPendingImages();
   });
+}
+
+function toggleUrlInput() {
+  var row = document.getElementById('apUrlRow');
+  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addUrlImage() {
+  var input = document.getElementById('apImageUrl');
+  var url = input.value.trim();
+  if (!url) return;
+  pendingImages.push(url);
+  renderPendingImages();
+  input.value = '';
+  document.getElementById('apUrlRow').style.display = 'none';
 }
 
 function showAddProductForm() {
   editingProductId = null;
   editingProductImages = null;
+  pendingImages = [];
   document.getElementById('addProductTitle').textContent = 'Add Product';
   document.getElementById('apName').value = '';
   document.getElementById('apCategory').value = 'caps';
@@ -335,8 +369,7 @@ function showAddProductForm() {
   document.getElementById('apColors').value = '';
   document.getElementById('apBadge').value = '';
   document.getElementById('apPremium').value = 'no';
-  document.getElementById('apImagePreview').innerHTML = '';
-  document.getElementById('apImagePreview').style.display = 'none';
+  renderPendingImages();
   document.getElementById('addProductSection').style.display = 'block';
   document.getElementById('addProductSection').scrollIntoView({ behavior: 'smooth' });
 }
@@ -345,6 +378,7 @@ function hideAddProductForm() {
   document.getElementById('addProductSection').style.display = 'none';
   editingProductId = null;
   editingProductImages = null;
+  pendingImages = [];
 }
 
 function reloadAdminData() {
@@ -361,7 +395,6 @@ function saveProductForm() {
   var category = document.getElementById('apCategory').value;
   var price = parseFloat(document.getElementById('apPrice').value);
   var desc = document.getElementById('apDesc').value.trim();
-  var fileInput = document.getElementById('apImages');
   var sizesStr = document.getElementById('apSizes').value.trim();
   var colorsStr = document.getElementById('apColors').value.trim();
   var badge = document.getElementById('apBadge').value.trim() || null;
@@ -372,16 +405,12 @@ function saveProductForm() {
     return;
   }
 
-  if (fileInput.files && fileInput.files.length > 0) {
-    filesToBase64(fileInput.files).then(function(images) {
-      if (images.length === 0) { showToast('Failed to read images.'); return; }
-      finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium);
-    });
-  } else if (editingProductImages && editingProductImages.length > 0) {
-    finishSaveProduct(name, category, price, desc, editingProductImages, sizesStr, colorsStr, badge, premium);
-  } else {
-    showToast('Please select at least one product image.');
+  if (pendingImages.length === 0) {
+    showToast('Please add at least one product image.');
+    return;
   }
+
+  finishSaveProduct(name, category, price, desc, pendingImages, sizesStr, colorsStr, badge, premium);
 }
 
 function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium) {
@@ -434,6 +463,7 @@ function editProduct(id) {
   if (!p) return;
   editingProductId = id;
   editingProductImages = p.images;
+  pendingImages = p.images.slice();
   document.getElementById('addProductTitle').textContent = 'Edit Product';
   document.getElementById('apName').value = p.name;
   document.getElementById('apCategory').value = p.category ? p.category.toLowerCase() : 'caps';
@@ -444,11 +474,7 @@ function editProduct(id) {
   document.getElementById('apColors').value = p.colors ? p.colors.map(function(c) { return c.name; }).join(', ') : '';
   document.getElementById('apBadge').value = p.badge || '';
   document.getElementById('apPremium').value = p.premium ? 'yes' : 'no';
-  var preview = document.getElementById('apImagePreview');
-  preview.innerHTML = p.images.map(function(img) {
-    return '<div style="width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover" /></div>';
-  }).join('');
-  preview.style.display = 'flex';
+  renderPendingImages();
   document.getElementById('addProductSection').style.display = 'block';
   document.getElementById('addProductSection').scrollIntoView({ behavior: 'smooth' });
 }
@@ -564,7 +590,8 @@ function previewStore(mode) {
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('apImages').addEventListener('change', function() {
-    imagePreviewFromFiles(this.files, document.getElementById('apImagePreview'));
+    addFilesToPending(this.files);
+    this.value = '';
   });
   window.onAuthStateChanged(function() {
     var user = getCurrentUser();
