@@ -107,8 +107,16 @@ function saveProducts(prods) {
   if (typeof window.syncProductsToFirestore === 'function') {
     window.syncProductsToFirestore(prods).then(function() {
       localStorage.setItem('gentifyProductsTS', String(Date.now()));
-    }).catch(function() {
-      showToast('Warning: Product saved locally but failed to sync to cloud.');
+    }).catch(function(e) {
+      console.error('Firestore sync first attempt failed:', e);
+      setTimeout(function() {
+        window.syncProductsToFirestore(prods).then(function() {
+          localStorage.setItem('gentifyProductsTS', String(Date.now()));
+        }).catch(function(e2) {
+          console.error('Firestore sync retry also failed:', e2);
+          showToast('Cloud sync error: ' + (e2.code || e2.message || 'unknown'));
+        });
+      }, 2000);
     });
   }
 }
