@@ -189,11 +189,15 @@ function syncFromFirestore(callback) {
 // Initialize: render from localStorage immediately, then sync from Firestore
 (function initApp() {
   var cached = getProducts();
-  if (Object.keys(cached).length > 0) {
+  if (Object.keys(cached).length === 0) {
+    localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
+    products = DEFAULT_PRODUCTS;
+    allProducts = getAllProductsFlat();
+  } else {
     products = cached;
     allProducts = getAllProductsFlat();
-    renderAllProductGrids();
   }
+  renderAllProductGrids();
   syncFromFirestore(function() {
     renderAllProductGrids();
   });
@@ -224,7 +228,7 @@ function renderProducts(list, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = list.map(p => `
-    <div class="product-card" onclick="location.href='product-detail.html?id=${p.id}'">
+    <div class="product-card" onclick="openProductDetail('${p.id}')">
       <div class="product-img-wrap">
         <img src="${p.images[0]}" alt="${p.name}" loading="lazy" />
         ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
