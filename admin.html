@@ -139,6 +139,13 @@
           <label>Badge (optional)</label>
           <input type="text" id="apBadge" placeholder="e.g. New, Popular, Best Seller" />
         </div>
+        <div class="form-group">
+          <label>Add in Premium Picks</label>
+          <select id="apPremium" style="padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
         <div style="display:flex;gap:10px;margin-top:8px">
           <button class="submit-btn" onclick="saveProductForm()">Save Product</button>
           <button class="cancel-btn" onclick="hideAddProductForm()">Cancel</button>
@@ -327,6 +334,7 @@ function showAddProductForm() {
   document.getElementById('apSizes').value = '';
   document.getElementById('apColors').value = '';
   document.getElementById('apBadge').value = '';
+  document.getElementById('apPremium').value = 'no';
   document.getElementById('apImagePreview').innerHTML = '';
   document.getElementById('apImagePreview').style.display = 'none';
   document.getElementById('addProductSection').style.display = 'block';
@@ -357,6 +365,7 @@ function saveProductForm() {
   var sizesStr = document.getElementById('apSizes').value.trim();
   var colorsStr = document.getElementById('apColors').value.trim();
   var badge = document.getElementById('apBadge').value.trim() || null;
+  var premium = document.getElementById('apPremium').value === 'yes';
 
   if (!name || !price || !desc) {
     showToast('Please fill in name, price, and description.');
@@ -366,16 +375,16 @@ function saveProductForm() {
   if (fileInput.files && fileInput.files.length > 0) {
     filesToBase64(fileInput.files).then(function(images) {
       if (images.length === 0) { showToast('Failed to read images.'); return; }
-      finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge);
+      finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium);
     });
   } else if (editingProductImages && editingProductImages.length > 0) {
-    finishSaveProduct(name, category, price, desc, editingProductImages, sizesStr, colorsStr, badge);
+    finishSaveProduct(name, category, price, desc, editingProductImages, sizesStr, colorsStr, badge, premium);
   } else {
     showToast('Please select at least one product image.');
   }
 }
 
-function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge) {
+function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium) {
   var sizes = sizesStr ? sizesStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : null;
   var colors = colorsStr ? colorsStr.split(',').map(function(s) {
     return { name: s.trim(), hex: '#' + (s.trim() === 'Black' ? '1A1A1A' : s.trim() === 'White' ? 'F5F5F0' : s.trim() === 'Navy' ? '1B2A4A' : s.trim() === 'Brown' ? '6B4226' : s.trim() === 'Tan' ? 'C4A882' : s.trim() === 'Olive' ? '4A5D23' : s.trim() === 'Gray' ? '6B6B6B' : s.trim() === 'Silver' ? 'C0C0C0' : s.trim() === 'Gold' ? 'C8965A' : 'CCCCCC') };
@@ -393,7 +402,8 @@ function finishSaveProduct(name, category, price, desc, images, sizesStr, colors
         images: images,
         sizes: sizes,
         colors: colors,
-        badge: badge
+        badge: badge,
+        premium: premium
       });
       showToast('Product updated successfully!');
     }
@@ -405,6 +415,7 @@ function finishSaveProduct(name, category, price, desc, images, sizesStr, colors
       desc: desc,
       price: price,
       badge: badge,
+      premium: premium,
       category: category.charAt(0).toUpperCase() + category.slice(1),
       images: images,
       sizes: sizes,
@@ -432,6 +443,7 @@ function editProduct(id) {
   document.getElementById('apSizes').value = p.sizes ? p.sizes.join(', ') : '';
   document.getElementById('apColors').value = p.colors ? p.colors.map(function(c) { return c.name; }).join(', ') : '';
   document.getElementById('apBadge').value = p.badge || '';
+  document.getElementById('apPremium').value = p.premium ? 'yes' : 'no';
   var preview = document.getElementById('apImagePreview');
   preview.innerHTML = p.images.map(function(img) {
     return '<div style="width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid var(--border)"><img src="'+img+'" style="width:100%;height:100%;object-fit:cover" /></div>';

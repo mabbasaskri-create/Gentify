@@ -47,44 +47,44 @@ window.onAuthStateChanged(function(firebaseUser) {
 // ===== PRODUCT DATA =====
 var DEFAULT_PRODUCTS = {
   caps: [
-    { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 29.99, badge: null, category: 'Caps',
+    { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 29.99, badge: null, premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'White', hex: '#F5F5F0' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 32.00, badge: 'Popular', category: 'Caps',
+    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 32.00, badge: 'Popular', premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80','https://images.unsplash.com/photo-1595433707800-5b393e94297a?w=600&q=80','https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Beige', hex: '#D4C5A9' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Olive', hex: '#4A5D23' }] },
-    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 34.50, badge: null, category: 'Caps',
+    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 34.50, badge: null, premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80','https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80'],
       sizes: ['M', 'L', 'XL'], colors: [{ name: 'Navy', hex: '#1B2A4A' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Gray', hex: '#6B6B6B' }] },
-    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 36.00, badge: 'New', category: 'Caps',
+    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 36.00, badge: 'New', premium: false, category: 'Caps',
       images: ['https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80'],
       sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Olive', hex: '#4A5D23' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   watches: [
-    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 249.00, badge: 'Best Seller', category: 'Watches',
+    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 249.00, badge: 'Best Seller', premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 179.00, badge: null, category: 'Watches',
+    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 179.00, badge: null, premium: false, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80','https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Silver', hex: '#C0C0C0' }] },
-    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 199.00, badge: null, category: 'Watches',
+    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 199.00, badge: null, premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80','https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80'],
       sizes: ['Standard'], colors: [{ name: 'Silver', hex: '#C0C0C0' }, { name: 'Gold', hex: '#C8965A' }] },
-    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 329.00, badge: 'Premium', category: 'Watches',
+    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 329.00, badge: 'Premium', premium: true, category: 'Watches',
       images: ['https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
       sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#5C3A1E' }, { name: 'Black', hex: '#1A1A1A' }] }
   ],
   wallets: [
-    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 79.00, badge: 'Best Seller', category: 'Wallets',
+    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 79.00, badge: 'Best Seller', premium: true, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
       sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Tan', hex: '#C4A882' }] },
-    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 49.00, badge: null, category: 'Wallets',
+    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 49.00, badge: null, premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'],
       sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 89.00, badge: 'New', category: 'Wallets',
+    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 89.00, badge: 'New', premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80','https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80'],
       sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 65.00, badge: null, category: 'Wallets',
+    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 65.00, badge: null, premium: false, category: 'Wallets',
       images: ['https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
       sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }] }
   ]
@@ -249,7 +249,7 @@ function renderAllProductGrids() {
   if (products.caps) renderProducts(products.caps, 'capsGrid');
   if (products.watches) renderProducts(products.watches, 'watchesGrid');
   if (products.wallets) renderProducts(products.wallets, 'walletsGrid');
-  var premium = allProducts.filter(function(p) { return p.badge === 'Premium'; });
+  var premium = allProducts.filter(function(p) { return p.premium; });
   if (premium.length > 0) renderProducts(premium, 'premiumGrid');
 }
 
