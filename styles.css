@@ -1108,6 +1108,21 @@ footer {
 .field-error { font-size: 0.8rem; color: #dc2626; margin-top: 4px; display: none; }
 .input-error,
 .input-error:focus { border: 1.5px solid #dc2626 !important; background: #fef2f2 !important; }
+
+.city-select-wrap { position: relative; }
+.city-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: var(--white); border: 1.5px solid var(--border); border-top: none;
+  border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto;
+  display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.city-option {
+  padding: 10px 14px; cursor: pointer; font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.city-option:hover { background: var(--cream); }
+.city-select-wrap input:focus + .city-dropdown,
+.city-select-wrap .city-dropdown.has-matches { display: block; }
 .checkout-payment { margin-top: 24px; }
 .checkout-payment h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 16px; }
 .checkout-payment .payment-option { display: flex; align-items: center; gap: 14px; padding: 16px; border: 2px solid var(--border); border-radius: 12px; cursor: default; }

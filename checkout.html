@@ -75,12 +75,15 @@
           <div class="form-row2">
             <div class="form-group">
               <label>City <span class="required">*</span></label>
-              <input type="text" id="coCity" placeholder="Lahore" />
+              <div class="city-select-wrap">
+                <input type="text" id="coCity" placeholder="Search for a city..." autocomplete="off" />
+                <div class="city-dropdown" id="coCityDropdown"></div>
+              </div>
               <div class="field-error" id="coCityError"></div>
             </div>
             <div class="form-group">
               <label>Postal Code <span class="required">*</span></label>
-              <input type="text" id="coPostalCode" placeholder="54000" />
+              <input type="text" id="coPostalCode" placeholder="54000" maxlength="5" inputmode="numeric" />
               <div class="field-error" id="coPostalCodeError"></div>
             </div>
           </div>
@@ -155,6 +158,72 @@
 <script>
 var DELIVERY_CHARGE = 300;
 
+var PAKISTAN_CITIES = [
+  'Abbottabad', 'Attock', 'Bahawalnagar', 'Bahawalpur', 'Bhakkar', 'Burewala', 'Chakwal',
+  'Chiniot', 'Chishtian', 'Dadu', 'Daska', 'Dera Ghazi Khan', 'Dera Ismail Khan',
+  'Faisalabad', 'Ghotki', 'Gujranwala', 'Gujrat', 'Hafizabad', 'Haripur', 'Havelian',
+  'Hub', 'Hyderabad', 'Islamabad', 'Jacobabad', 'Jaranwala', 'Jhang', 'Jhelum',
+  'Kamalia', 'Kamoke', 'Karachi', 'Kasur', 'Khanewal', 'Khanpur', 'Kharian',
+  'Khuzdar', 'Kohat', 'Kot Addu', 'Kotli', 'Lahore', 'Larkana', 'Lodhran',
+  'Mandi Bahauddin', 'Mardan', 'Mianwali', 'Multan', 'Muridke', 'Muzaffarabad',
+  'Muzaffargarh', 'Narowal', 'Nawabshah', 'Nowshera', 'Okara', 'Pakpattan',
+  'Peshawar', 'Quetta', 'Rahim Yar Khan', 'Rajanpur', 'Rawalpindi', 'Sadiqabad',
+  'Sahiwal', 'Sargodha', 'Sheikhupura', 'Shikarpur', 'Sialkot', 'Sukkur',
+  'Swabi', 'Swat', 'Tando Allahyar', 'Tando Muhammad Khan', 'Taxila', 'Timergara',
+  'Turbat', 'Vehari', 'Wah Cantonment', 'Wazirabad', 'Zhob'
+].sort();
+
+function initCitySearch() {
+  var input = document.getElementById('coCity');
+  var dropdown = document.getElementById('coCityDropdown');
+  if (!input || !dropdown) return;
+
+  input.addEventListener('input', function() {
+    var val = this.value.toLowerCase().trim();
+    dropdown.innerHTML = '';
+    if (!val) {
+      dropdown.style.display = 'none';
+      return;
+    }
+    var matches = PAKISTAN_CITIES.filter(function(c) { return c.toLowerCase().startsWith(val); });
+    if (matches.length === 0) {
+      dropdown.style.display = 'none';
+      return;
+    }
+    dropdown.style.display = 'block';
+    matches.forEach(function(c) {
+      var div = document.createElement('div');
+      div.className = 'city-option';
+      div.textContent = c;
+      div.onclick = function() {
+        input.value = c;
+        dropdown.style.display = 'none';
+        input.dataset.selected = 'true';
+      };
+      dropdown.appendChild(div);
+    });
+  });
+
+  input.addEventListener('blur', function() {
+    setTimeout(function() { dropdown.style.display = 'none'; }, 200);
+  });
+
+  input.addEventListener('focus', function() {
+    var val = this.value.toLowerCase().trim();
+    if (val) {
+      var evt = new Event('input');
+      this.dispatchEvent(evt);
+    }
+  });
+}
+
+function getSelectedCity() {
+  var input = document.getElementById('coCity');
+  var val = input.value.trim();
+  if (PAKISTAN_CITIES.indexOf(val) === -1) return '';
+  return val;
+}
+
 function validatePakistaniPhone(phone) {
   var cleaned = phone.replace(/[\s\-\(\)]/g, '');
   return /^03\d{9}$/.test(cleaned) || /^\+92\d{10}$/.test(cleaned) || /^92\d{10}$/.test(cleaned);
@@ -217,6 +286,13 @@ function updateCheckoutSummary() {
   document.getElementById('coGrandTotal').textContent = formatPrice(grandTotal);
 }
 
+function clearFieldError(fieldId) {
+  var errEl = document.getElementById(fieldId + 'Error');
+  if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  var input = document.getElementById(fieldId);
+  if (input) input.classList.remove('input-error');
+}
+
 function clearFieldErrors() {
   var errors = document.querySelectorAll('.field-error');
   errors.forEach(function(el) { el.textContent = ''; el.style.display = 'none'; });
@@ -235,6 +311,38 @@ function showFieldError(id, message) {
   if (input) input.classList.add('input-error');
 }
 
+function validateField(fieldId) {
+  clearFieldError(fieldId);
+  var input = document.getElementById(fieldId);
+  if (!input) return true;
+  var val = input.value.trim();
+  switch (fieldId) {
+    case 'coFullName':
+      if (!val) { showFieldError('coFullNameError', 'This field is required.'); return false; }
+      return true;
+    case 'coPhone':
+      if (!val) { showFieldError('coPhoneError', 'This field is required.'); return false; }
+      if (!validatePakistaniPhone(val)) { showFieldError('coPhoneError', 'Please enter a valid Pakistani phone number.'); return false; }
+      return true;
+    case 'coEmail':
+      if (!val) { showFieldError('coEmailError', 'This field is required.'); return false; }
+      if (!val.includes('@') || !val.includes('.')) { showFieldError('coEmailError', 'Please enter a valid email address.'); return false; }
+      return true;
+    case 'coAddress':
+      if (!val) { showFieldError('coAddressError', 'This field is required.'); return false; }
+      return true;
+    case 'coCity':
+      var city = getSelectedCity();
+      if (!city) { showFieldError('coCityError', 'Please select a city.'); return false; }
+      return true;
+    case 'coPostalCode':
+      if (!val) { showFieldError('coPostalCodeError', 'This field is required.'); return false; }
+      if (!/^\d{5}$/.test(val)) { showFieldError('coPostalCodeError', 'Please enter a valid 5-digit postal code.'); return false; }
+      return true;
+  }
+  return true;
+}
+
 function placeOrder() {
   clearFieldErrors();
 
@@ -242,7 +350,7 @@ function placeOrder() {
   var phone = document.getElementById('coPhone').value.trim();
   var email = document.getElementById('coEmail').value.trim();
   var address = document.getElementById('coAddress').value.trim();
-  var city = document.getElementById('coCity').value.trim();
+  var city = getSelectedCity();
   var postalCode = document.getElementById('coPostalCode').value.trim();
   var orderNotes = document.getElementById('coNotes').value.trim();
   var additionalInstructions = document.getElementById('coInstructions').value.trim();
@@ -250,33 +358,36 @@ function placeOrder() {
   var hasError = false;
 
   if (!fullName) {
-    showFieldError('coFullNameError', 'Please enter your full name.');
+    showFieldError('coFullNameError', 'This field is required.');
     hasError = true;
   }
   if (!phone) {
-    showFieldError('coPhoneError', 'Please enter your phone number.');
+    showFieldError('coPhoneError', 'This field is required.');
     hasError = true;
   } else if (!validatePakistaniPhone(phone)) {
     showFieldError('coPhoneError', 'Please enter a valid Pakistani phone number.');
     hasError = true;
   }
   if (!email) {
-    showFieldError('coEmailError', 'Please enter your email address.');
+    showFieldError('coEmailError', 'This field is required.');
     hasError = true;
   } else if (!email.includes('@') || !email.includes('.')) {
     showFieldError('coEmailError', 'Please enter a valid email address.');
     hasError = true;
   }
   if (!address) {
-    showFieldError('coAddressError', 'Please enter your full address.');
+    showFieldError('coAddressError', 'This field is required.');
     hasError = true;
   }
   if (!city) {
-    showFieldError('coCityError', 'Please enter your city.');
+    showFieldError('coCityError', 'Please select a city.');
     hasError = true;
   }
   if (!postalCode) {
-    showFieldError('coPostalCodeError', 'Please enter your postal code.');
+    showFieldError('coPostalCodeError', 'This field is required.');
+    hasError = true;
+  } else if (!/^\d{5}$/.test(postalCode)) {
+    showFieldError('coPostalCodeError', 'Please enter a valid 5-digit postal code.');
     hasError = true;
   }
 
@@ -369,6 +480,19 @@ function placeOrder() {
 
 document.addEventListener('DOMContentLoaded', function() {
   renderCheckout();
+  initCitySearch();
+
+  var requiredFields = ['coFullName', 'coPhone', 'coEmail', 'coAddress', 'coCity', 'coPostalCode'];
+  requiredFields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', function() { validateField(id); });
+    el.addEventListener('input', function() { clearFieldError(id); });
+  });
+
+  document.getElementById('coPostalCode').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 5);
+  });
 });
 </script>
 </body>
