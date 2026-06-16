@@ -869,6 +869,8 @@ function cancelMyOrder(orderId) {
   if (typeof renderOrders === 'function') renderOrders();
   if (typeof renderTracking === 'function') renderTracking();
 }
+
+function updateOrderStatus(userEmail, orderId, newStatus) {
   var users = getUsers();
   var user = users.find(function(u) { return u.email === userEmail; });
   if (!user || !user.orders) return;
