@@ -87,6 +87,8 @@
 
 <script src="script.js" defer></script>
 <script>
+const stepNames = ['Pending', 'Confirmed', 'Shipped', 'Delivered'];
+
 function renderTracking() {
   const container = document.getElementById('trackContent');
   if (!container) return;
