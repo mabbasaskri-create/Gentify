@@ -25,12 +25,16 @@ window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
 
 window.syncProductsToFirestore = function(prods) {
-  return setDoc(PRODUCTS_DOC, { data: prods, updated: Date.now() });
+  return setDoc(PRODUCTS_DOC, { dataJson: JSON.stringify(prods), updated: Date.now() });
 };
 
 window.loadProductsFromFirestore = function() {
   return getDoc(PRODUCTS_DOC).then(function(snap) {
-    if (snap.exists()) return snap.data();
+    if (snap.exists()) {
+      var d = snap.data();
+      if (d.dataJson) return { data: JSON.parse(d.dataJson), updated: d.updated };
+      if (d.data) return { data: d.data, updated: d.updated };
+    }
     return null;
   });
 };
