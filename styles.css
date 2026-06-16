@@ -1138,7 +1138,7 @@ footer {
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
   footer { padding: 40px 4% 24px; }
 
-  #hero { padding: 72px 4% 48px; min-height: auto; }
+  #hero { padding: 100px 4% 48px; min-height: auto; }
   .hero-title { font-size: clamp(2rem, 8vw, 3.2rem); }
   .hero-subtitle { font-size: 0.95rem; max-width: 100%; }
   .hero-stats { gap: 20px; flex-wrap: wrap; margin-top: 40px; padding-top: 28px; }
