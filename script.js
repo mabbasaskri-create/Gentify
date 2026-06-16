@@ -845,7 +845,30 @@ function getOrderById(orderId) {
   return orders.find(function(o) { return o.id === orderId; });
 }
 
-function updateOrderStatus(userEmail, orderId, newStatus) {
+function cancelMyOrder(orderId) {
+  var user = getCurrentUser();
+  if (!user) { showToast('Please sign in.'); return; }
+  var users = getUsers();
+  var found = users.find(function(u) { return u.email === user.email; });
+  if (!found || !found.orders) return;
+  var order = found.orders.find(function(o) { return o.id === orderId; });
+  if (!order) return;
+  var s = (order.status || '').toLowerCase();
+  if (s !== 'pending' && s !== 'confirmed') {
+    showToast('This order can no longer be cancelled.');
+    return;
+  }
+  order.status = 'cancelled';
+  if (!order.timeline) order.timeline = [];
+  order.timeline.push({
+    time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    text: 'Order cancelled by customer'
+  });
+  saveUsers(users);
+  showToast('Order ' + orderId + ' has been cancelled.');
+  if (typeof renderOrders === 'function') renderOrders();
+  if (typeof renderTracking === 'function') renderTracking();
+}
   var users = getUsers();
   var user = users.find(function(u) { return u.email === userEmail; });
   if (!user || !user.orders) return;

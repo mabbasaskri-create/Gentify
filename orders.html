@@ -130,6 +130,7 @@ function renderOrders() {
             <div class="order-total" style="margin-top:4px">Total: <span>${formatPrice(o.total)}</span></div>
           </div>
           <a href="track-order.html?id=${o.id}" class="track-btn">Track Order</a>
+          ${['pending','confirmed'].indexOf((o.status||'').toLowerCase()) !== -1 ? `<button class="track-btn cancel-btn" onclick="cancelMyOrder('${o.id}')">Cancel Order</button>` : ''}
         </div>
       </div>`;
     }).join('');

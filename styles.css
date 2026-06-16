@@ -886,6 +886,15 @@ footer {
   text-decoration: none; transition: background 0.2s; font-family: 'Inter', sans-serif;
 }
 .order-card-footer .track-btn:hover { background: var(--gold); }
+.order-card-footer .cancel-btn { background: #dc2626; margin-left: 8px; }
+.order-card-footer .cancel-btn:hover { background: #b91c1c; }
+
+.cancel-order-btn {
+  display: block; margin: -24px auto 32px; background: #dc2626; color: #fff;
+  border: none; border-radius: 30px; padding: 10px 28px; font-size: 0.85rem;
+  font-weight: 600; cursor: pointer; transition: background 0.2s; font-family: 'Inter', sans-serif;
+}
+.cancel-order-btn:hover { background: #b91c1c; }
 
 /* ===== TRACK ORDER ===== */
 .track-page {

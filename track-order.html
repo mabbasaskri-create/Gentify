@@ -120,6 +120,7 @@ function renderTracking() {
         </div>
       `).join('')}
     </div>
+    ${['pending','confirmed'].indexOf((order.status||'').toLowerCase()) !== -1 ? `<button class="cancel-order-btn" onclick="cancelMyOrder('${order.id}')">Cancel Order</button>` : ''}
     <div class="track-details">
       <h3>Order Details</h3>
       <div class="detail-row"><span class="detail-label">Order ID</span><span class="detail-value">${order.id}</span></div>
