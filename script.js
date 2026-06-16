@@ -101,10 +101,15 @@ function getProducts() {
 
 function saveProducts(prods) {
   localStorage.setItem('gentifyProducts', JSON.stringify(prods));
+  localStorage.setItem('gentifyProductsTS', String(Date.now()));
   products = prods;
   allProducts = getAllProductsFlat();
   if (typeof window.syncProductsToFirestore === 'function') {
-    window.syncProductsToFirestore(prods).catch(function() {});
+    window.syncProductsToFirestore(prods).then(function() {
+      localStorage.setItem('gentifyProductsTS', String(Date.now()));
+    }).catch(function() {
+      showToast('Warning: Product saved locally but failed to sync to cloud.');
+    });
   }
 }
 
