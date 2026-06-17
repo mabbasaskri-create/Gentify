@@ -100,8 +100,13 @@ function getProducts() {
 }
 
 function saveProducts(prods) {
-  localStorage.setItem('gentifyProducts', JSON.stringify(prods));
-  localStorage.setItem('gentifyProductsTS', String(Date.now()));
+  try {
+    localStorage.setItem('gentifyProducts', JSON.stringify(prods));
+    localStorage.setItem('gentifyProductsTS', String(Date.now()));
+  } catch (e) {
+    showToast('Storage full! Try using smaller images or removing unused products.');
+    return;
+  }
   products = prods;
   allProducts = getAllProductsFlat();
   if (typeof window.syncProductsToFirestore === 'function') {

@@ -130,7 +130,7 @@
             <input type="text" id="apImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
             <button onclick="addUrlImage()" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
           </div>
-          <small style="color:var(--gray);font-size:0.82rem">Add as many images as you want via file upload or URL. Click &times; to remove an image.</small>
+          <small style="color:var(--gray);font-size:0.82rem">Add up to 10 images via file upload or URL. Click &times; to remove an image.</small>
         </div>
         <div class="form-row2">
           <div class="form-group">
@@ -324,6 +324,17 @@ function removePendingImage(idx) {
   renderPendingImages();
 }
 
+function resizeImage(img, maxW, maxH, quality) {
+  var canvas = document.createElement('canvas');
+  var w = img.width, h = img.height;
+  if (w > maxW) { h *= maxW / w; w = maxW; }
+  if (h > maxH) { w *= maxH / h; h = maxH; }
+  canvas.width = w; canvas.height = h;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
 function filesToBase64(files) {
   return new Promise(function(resolve) {
     if (!files || files.length === 0) { resolve([]); return; }
@@ -332,17 +343,38 @@ function filesToBase64(files) {
     Array.from(files).forEach(function(file, i) {
       var reader = new FileReader();
       reader.onload = function(e) {
-        results[i] = e.target.result;
-        pending--;
-        if (pending === 0) resolve(results);
+        var img = new Image();
+        img.onload = function() {
+          results[i] = resizeImage(img, 800, 800, 0.8);
+          pending--;
+          if (pending === 0) resolve(results);
+        };
+        img.onerror = function() {
+          results[i] = e.target.result;
+          pending--;
+          if (pending === 0) resolve(results);
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     });
   });
 }
 
+var MAX_IMAGES = 10;
+
 function addFilesToPending(files) {
-  filesToBase64(files).then(function(images) {
+  var remaining = MAX_IMAGES - pendingImages.length;
+  if (remaining <= 0) {
+    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
+    return;
+  }
+  var take = Math.min(files.length, remaining);
+  var selected = Array.from(files).slice(0, take);
+  if (take < files.length) {
+    showToast('Only ' + take + ' of ' + files.length + ' files added (max ' + MAX_IMAGES + ').');
+  }
+  filesToBase64(selected).then(function(images) {
     pendingImages = pendingImages.concat(images);
     renderPendingImages();
   });
@@ -357,6 +389,10 @@ function addUrlImage() {
   var input = document.getElementById('apImageUrl');
   var url = input.value.trim();
   if (!url) return;
+  if (pendingImages.length >= MAX_IMAGES) {
+    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
+    return;
+  }
   pendingImages.push(url);
   renderPendingImages();
   input.value = '';
@@ -415,6 +451,11 @@ function saveProductForm() {
 
   if (pendingImages.length === 0) {
     showToast('Please add at least one product image.');
+    return;
+  }
+
+  if (pendingImages.length > MAX_IMAGES) {
+    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
     return;
   }
 
