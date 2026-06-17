@@ -463,15 +463,51 @@ function saveProductForm() {
 }
 
 function colorNameToHex(name) {
-  var known = { black: '#1A1A1A', white: '#F5F5F0', navy: '#1B2A4A', brown: '#6B4226', tan: '#C4A882', olive: '#4A5D23', gray: '#6B6B6B', grey: '#6B6B6B', silver: '#C0C0C0', gold: '#C8965A', red: '#DC2626', blue: '#2563EB', green: '#16A34A', yellow: '#EAB308', orange: '#EA580C', purple: '#9333EA', pink: '#EC4899', burgundy: '#800020', maroon: '#800000', beige: '#F5F5DC', cream: '#FFFDD0', khaki: '#C3B091', charcoal: '#36454F', camel: '#C19A6B', cognac: '#9A4E2C', wine: '#722F37', teal: '#0D9488', coral: '#F97316', blush: '#FFE4E1', mauve: '#E0B0FF', taupe: '#483C32', rust: '#B7410E', chocolate: '#7B3F00', coffee: '#6F4E37', midnight: '#191970', steel: '#4682B4', smoke: '#848884', ivory: '#FFFFF0', lace: '#FDF5E6' };
-  return known[name.toLowerCase().trim()] || '#' + nameToHex(name);
-}
-
-function nameToHex(str) {
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-  var h = Math.abs(hash % 360);
-  return hslToHex(h, 55, 45);
+  var known = {
+    black:'#1A1A1A', white:'#FFFFFF', navy:'#1B2A4A', brown:'#6B4226', tan:'#C4A882',
+    olive:'#4A5D23', gray:'#6B6B6B', grey:'#6B6B6B', silver:'#C0C0C0', gold:'#C8965A',
+    red:'#DC2626', blue:'#2563EB', green:'#16A34A', yellow:'#EAB308', orange:'#EA580C',
+    purple:'#9333EA', pink:'#EC4899', burgundy:'#800020', maroon:'#800000', beige:'#F5F5DC',
+    cream:'#FFFDD0', khaki:'#C3B091', charcoal:'#36454F', camel:'#C19A6B', cognac:'#9A4E2C',
+    wine:'#722F37', teal:'#0D9488', coral:'#F97316', blush:'#FFE4E1', mauve:'#E0B0FF',
+    taupe:'#483C32', rust:'#B7410E', chocolate:'#7B3F00', coffee:'#6F4E37', midnight:'#191970',
+    steel:'#4682B4', smoke:'#848884', ivory:'#FFFFF0', lace:'#FDF5E6', mint:'#98FB98',
+    lavender:'#E6E6FA', peach:'#FFDAB9', salmon:'#FA8072', rose:'#FF007F', cyan:'#00FFFF',
+    indigo:'#4B0082', violet:'#8F00FF', turquoise:'#40E0D0', amber:'#FFBF00', jade:'#00A86B',
+    bronze:'#CD7F32', plum:'#DDA0DD', lilac:'#C8A2C8', berry:'#8A2BE2', lemon:'#FFF700',
+    lime:'#32CD32', cherry:'#DE3163', sapphire:'#0F52BA', emerald:'#50C878', ruby:'#E0115F',
+    denim:'#1560BD', cork:'#BA7F4B', bone:'#E3DAC9', bronze:'#CD7F32', pewter:'#899499',
+    slate:'#708090', wheat:'#F5DEB3', linen:'#FAF0E6', silk:'#F8F0E8', mocha:'#A67B5B',
+    hazel:'#8E7618', maple:'#BB6528', walnut:'#773F1A', mahogany:'#C04000', ebony:'#555D50',
+    onyx:'#353839', pearl:'#F0EAD6', opal:'#A8C3BC', jade:'#00A86B', garnet:'#733635'
+  };
+  var key = name.toLowerCase().trim();
+  if (known[key]) return known[key];
+  var hue = 0, sat = 55, lit = 45;
+  var lower = name.toLowerCase();
+  if (lower.indexOf('blue') >= 0) hue = 210;
+  else if (lower.indexOf('green') >= 0) hue = 120;
+  else if (lower.indexOf('red') >= 0) hue = 0;
+  else if (lower.indexOf('yellow') >= 0) hue = 55;
+  else if (lower.indexOf('orange') >= 0) hue = 30;
+  else if (lower.indexOf('purple') >= 0 || lower.indexOf('violet') >= 0) hue = 270;
+  else if (lower.indexOf('pink') >= 0) hue = 330;
+  else if (lower.indexOf('brown') >= 0 || lower.indexOf('tan') >= 0) hue = 30;
+  else if (lower.indexOf('gray') >= 0 || lower.indexOf('grey') >= 0) { hue = 0; sat = 10; lit = 50; }
+  else if (lower.indexOf('black') >= 0) { hue = 0; sat = 0; lit = 15; }
+  else if (lower.indexOf('white') >= 0) { hue = 0; sat = 0; lit = 95; }
+  else {
+    var hash = 0;
+    for (var i = 0; i < lower.length; i++) { hash = lower.charCodeAt(i) + ((hash << 5) - hash); }
+    hue = Math.abs(hash % 360);
+  }
+  if (lower.indexOf('dark') >= 0) lit = Math.max(15, lit - 15);
+  if (lower.indexOf('light') >= 0) lit = Math.min(85, lit + 20);
+  if (lower.indexOf('pale') >= 0) { lit = Math.min(85, lit + 20); sat = Math.max(20, sat - 15); }
+  if (lower.indexOf('bright') >= 0) sat = Math.min(100, sat + 20);
+  sat = Math.max(10, Math.min(100, sat));
+  lit = Math.max(10, Math.min(90, lit));
+  return hslToHex(hue, sat, lit);
 }
 
 function hslToHex(h, s, l) {
@@ -479,7 +515,7 @@ function hslToHex(h, s, l) {
   var a = s * Math.min(l, 1 - l);
   var f = function(n) { var k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
   var toHex = function(x) { return Math.round(255 * x).toString(16).padStart(2, '0'); };
-  return toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+  return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
 }
 
 function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium) {
