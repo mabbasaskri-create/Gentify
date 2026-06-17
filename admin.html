@@ -465,7 +465,7 @@ function saveProductForm() {
 function colorNameToHex(name) {
   var known = {
     black:'#1A1A1A', white:'#FFFFFF', navy:'#1B2A4A', brown:'#6B4226', tan:'#C4A882',
-    olive:'#4A5D23', gray:'#6B6B6B', grey:'#6B6B6B', silver:'#C0C0C0', gold:'#C8965A',
+    olive:'#4A5D23', gray:'#888888', grey:'#888888', silver:'#C0C0C0', gold:'#C8965A',
     red:'#DC2626', blue:'#2563EB', green:'#16A34A', yellow:'#EAB308', orange:'#EA580C',
     purple:'#9333EA', pink:'#EC4899', burgundy:'#800020', maroon:'#800000', beige:'#F5F5DC',
     cream:'#FFFDD0', khaki:'#C3B091', charcoal:'#36454F', camel:'#C19A6B', cognac:'#9A4E2C',
@@ -476,15 +476,37 @@ function colorNameToHex(name) {
     indigo:'#4B0082', violet:'#8F00FF', turquoise:'#40E0D0', amber:'#FFBF00', jade:'#00A86B',
     bronze:'#CD7F32', plum:'#DDA0DD', lilac:'#C8A2C8', berry:'#8A2BE2', lemon:'#FFF700',
     lime:'#32CD32', cherry:'#DE3163', sapphire:'#0F52BA', emerald:'#50C878', ruby:'#E0115F',
-    denim:'#1560BD', cork:'#BA7F4B', bone:'#E3DAC9', bronze:'#CD7F32', pewter:'#899499',
+    denim:'#1560BD', cork:'#BA7F4B', bone:'#E3DAC9', pewter:'#899499',
     slate:'#708090', wheat:'#F5DEB3', linen:'#FAF0E6', silk:'#F8F0E8', mocha:'#A67B5B',
     hazel:'#8E7618', maple:'#BB6528', walnut:'#773F1A', mahogany:'#C04000', ebony:'#555D50',
-    onyx:'#353839', pearl:'#F0EAD6', opal:'#A8C3BC', jade:'#00A86B', garnet:'#733635'
+    onyx:'#353839', pearl:'#F0EAD6', opal:'#A8C3BC', garnet:'#733635',
+    'slate grey':'#708090', 'slate gray':'#708090', 'light grey':'#D3D3D3', 'light gray':'#D3D3D3',
+    'dark grey':'#555555', 'dark gray':'#555555', 'dark blue':'#00008B', 'light blue':'#ADD8E6',
+    'dark green':'#006400', 'light green':'#90EE90', 'dark red':'#8B0000', 'light red':'#FF7F7F',
+    'dark brown':'#5C2E00', 'light brown':'#D2B48C', 'dark purple':'#4B0082', 'light purple':'#D8BFD8'
   };
   var key = name.toLowerCase().trim();
   if (known[key]) return known[key];
-  var hue = 0, sat = 55, lit = 45;
   var lower = name.toLowerCase();
+  var isGray = lower.indexOf('gray') >= 0 || lower.indexOf('grey') >= 0;
+  var isBlack = lower.indexOf('black') >= 0;
+  var isWhite = lower.indexOf('white') >= 0;
+  if (isGray || isBlack || isWhite) {
+    var level = 128;
+    if (isGray) level = 128;
+    if (isBlack) level = 26;
+    if (isWhite) level = 240;
+    if (lower.indexOf('light') >= 0 || lower.indexOf('pale') >= 0) level = Math.min(240, level + 60);
+    if (lower.indexOf('dark') >= 0) level = Math.max(26, level - 50);
+    if (lower.indexOf('slate') >= 0) level = Math.round(level * 0.7 + 60 * 0.3);
+    if (lower.indexOf('charcoal') >= 0) level = 54;
+    if (lower.indexOf('smoke') >= 0) level = 133;
+    if (lower.indexOf('pewter') >= 0) level = 145;
+    if (lower.indexOf('silver') >= 0) level = 192;
+    var hx = level.toString(16).padStart(2, '0');
+    return '#' + hx + hx + hx;
+  }
+  var hue = 0, sat = 65, lit = 50;
   if (lower.indexOf('blue') >= 0) hue = 210;
   else if (lower.indexOf('green') >= 0) hue = 120;
   else if (lower.indexOf('red') >= 0) hue = 0;
@@ -493,20 +515,26 @@ function colorNameToHex(name) {
   else if (lower.indexOf('purple') >= 0 || lower.indexOf('violet') >= 0) hue = 270;
   else if (lower.indexOf('pink') >= 0) hue = 330;
   else if (lower.indexOf('brown') >= 0 || lower.indexOf('tan') >= 0) hue = 30;
-  else if (lower.indexOf('gray') >= 0 || lower.indexOf('grey') >= 0) { hue = 0; sat = 10; lit = 50; }
-  else if (lower.indexOf('black') >= 0) { hue = 0; sat = 0; lit = 15; }
-  else if (lower.indexOf('white') >= 0) { hue = 0; sat = 0; lit = 95; }
+  else if (lower.indexOf('gold') >= 0) hue = 45;
+  else if (lower.indexOf('teal') >= 0) hue = 175;
+  else if (lower.indexOf('mint') >= 0) hue = 150;
+  else if (lower.indexOf('coral') >= 0) hue = 10;
+  else if (lower.indexOf('rose') >= 0) hue = 340;
+  else if (lower.indexOf('lavender') >= 0) { hue = 250; sat = 40; lit = 75; }
+  else if (lower.indexOf('peach') >= 0) { hue = 30; sat = 50; lit = 75; }
   else {
     var hash = 0;
     for (var i = 0; i < lower.length; i++) { hash = lower.charCodeAt(i) + ((hash << 5) - hash); }
     hue = Math.abs(hash % 360);
   }
-  if (lower.indexOf('dark') >= 0) lit = Math.max(15, lit - 15);
+  if (lower.indexOf('dark') >= 0) lit = Math.max(15, lit - 18);
   if (lower.indexOf('light') >= 0) lit = Math.min(85, lit + 20);
-  if (lower.indexOf('pale') >= 0) { lit = Math.min(85, lit + 20); sat = Math.max(20, sat - 15); }
+  if (lower.indexOf('pale') >= 0) { lit = Math.min(85, lit + 20); sat = Math.max(20, sat - 20); }
   if (lower.indexOf('bright') >= 0) sat = Math.min(100, sat + 20);
-  sat = Math.max(10, Math.min(100, sat));
-  lit = Math.max(10, Math.min(90, lit));
+  if (lower.indexOf('deep') >= 0) { lit = Math.max(15, lit - 15); sat = Math.min(100, sat + 10); }
+  if (lower.indexOf('dusty') >= 0 || lower.indexOf('muted') >= 0) sat = Math.max(15, sat - 25);
+  sat = Math.max(15, Math.min(100, sat));
+  lit = Math.max(12, Math.min(88, lit));
   return hslToHex(hue, sat, lit);
 }
 
