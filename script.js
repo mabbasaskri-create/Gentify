@@ -139,21 +139,29 @@ function formatPrice(amount) {
 
 function addProduct(product) {
   var prods = getProducts();
-  var cat = (product.category || 'Caps').toLowerCase();
-  if (cat === 'caps') cat = 'caps';
-  else if (cat === 'watches') cat = 'watches';
-  else if (cat === 'wallets') cat = 'wallets';
-  else cat = 'caps';
+  var cat = product._categoryKey || 'caps';
   if (!prods[cat]) prods[cat] = [];
   prods[cat].push(product);
+  delete product._categoryKey;
   saveProducts(prods);
 }
 
 function updateProduct(id, updates) {
   var prods = getProducts();
+  var newCat = updates._categoryKey;
+  delete updates._categoryKey;
+  var found = null;
   Object.keys(prods).forEach(function(k) {
-    prods[k] = prods[k].map(function(p) { return p.id === id ? Object.assign({}, p, updates) : p; });
+    prods[k] = prods[k].filter(function(p) {
+      if (p.id === id) { found = Object.assign({}, p, updates); return false; }
+      return true;
+    });
   });
+  if (found) {
+    var targetCat = newCat || 'caps';
+    if (!prods[targetCat]) prods[targetCat] = [];
+    prods[targetCat].push(found);
+  }
   saveProducts(prods);
 }
 

@@ -462,44 +462,54 @@ function saveProductForm() {
   finishSaveProduct(name, category, price, desc, pendingImages, sizesStr, colorsStr, badge, premium);
 }
 
+function colorNameToHex(name) {
+  var known = { black: '#1A1A1A', white: '#F5F5F0', navy: '#1B2A4A', brown: '#6B4226', tan: '#C4A882', olive: '#4A5D23', gray: '#6B6B6B', grey: '#6B6B6B', silver: '#C0C0C0', gold: '#C8965A', red: '#DC2626', blue: '#2563EB', green: '#16A34A', yellow: '#EAB308', orange: '#EA580C', purple: '#9333EA', pink: '#EC4899', burgundy: '#800020', maroon: '#800000', beige: '#F5F5DC', cream: '#FFFDD0', khaki: '#C3B091', charcoal: '#36454F', camel: '#C19A6B', cognac: '#9A4E2C', wine: '#722F37', teal: '#0D9488', coral: '#F97316', blush: '#FFE4E1', mauve: '#E0B0FF', taupe: '#483C32', rust: '#B7410E', chocolate: '#7B3F00', coffee: '#6F4E37', midnight: '#191970', steel: '#4682B4', smoke: '#848884', ivory: '#FFFFF0', lace: '#FDF5E6' };
+  return known[name.toLowerCase().trim()] || '#' + nameToHex(name);
+}
+
+function nameToHex(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+  var h = Math.abs(hash % 360);
+  return hslToHex(h, 55, 45);
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  var a = s * Math.min(l, 1 - l);
+  var f = function(n) { var k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+  var toHex = function(x) { return Math.round(255 * x).toString(16).padStart(2, '0'); };
+  return toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+}
+
 function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium) {
   var sizes = sizesStr ? sizesStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : null;
   var colors = colorsStr ? colorsStr.split(',').map(function(s) {
-    return { name: s.trim(), hex: '#' + (s.trim() === 'Black' ? '1A1A1A' : s.trim() === 'White' ? 'F5F5F0' : s.trim() === 'Navy' ? '1B2A4A' : s.trim() === 'Brown' ? '6B4226' : s.trim() === 'Tan' ? 'C4A882' : s.trim() === 'Olive' ? '4A5D23' : s.trim() === 'Gray' ? '6B6B6B' : s.trim() === 'Silver' ? 'C0C0C0' : s.trim() === 'Gold' ? 'C8965A' : 'CCCCCC') };
+    return { name: s.trim(), hex: colorNameToHex(s.trim()) };
   }) : null;
 
+  var payload = {
+    name: name,
+    category: category.charAt(0).toUpperCase() + category.slice(1),
+    price: price,
+    desc: desc,
+    images: images,
+    sizes: sizes,
+    colors: colors,
+    badge: badge,
+    premium: premium,
+    _categoryKey: category
+  };
+
   if (editingProductId) {
-    var flat = getAllProductsFlat();
-    var existing = flat.find(function(p) { return p.id === editingProductId; });
-    if (existing) {
-      updateProduct(editingProductId, {
-        name: name,
-        category: category.charAt(0).toUpperCase() + category.slice(1),
-        price: price,
-        desc: desc,
-        images: images,
-        sizes: sizes,
-        colors: colors,
-        badge: badge,
-        premium: premium
-      });
-      showToast('Product updated successfully!');
-    }
+    payload.id = editingProductId;
+    updateProduct(editingProductId, payload);
+    showToast('Product updated successfully!');
   } else {
     var id = category.charAt(0) + '-' + Date.now().toString(36);
-    var product = {
-      id: id,
-      name: name,
-      desc: desc,
-      price: price,
-      badge: badge,
-      premium: premium,
-      category: category.charAt(0).toUpperCase() + category.slice(1),
-      images: images,
-      sizes: sizes,
-      colors: colors || [{ name: 'Default', hex: '#CCCCCC' }]
-    };
-    addProduct(product);
+    payload.id = id;
+    payload.colors = colors || [{ name: 'Default', hex: '#CCCCCC' }];
+    addProduct(payload);
     showToast('Product added successfully!');
   }
 
