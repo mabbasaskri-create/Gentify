@@ -214,6 +214,21 @@ function syncFromFirestore(callback) {
   });
 }
 
+function syncCollectionsFromFirestore(callback) {
+  if (typeof window.loadCollectionsFromFirestore !== 'function') {
+    if (callback) callback();
+    return;
+  }
+  window.loadCollectionsFromFirestore().then(function(result) {
+    if (result && result.data && result.data.length > 0) {
+      localStorage.setItem('gentifyCollections', JSON.stringify(result.data));
+    }
+    if (callback) callback();
+  }).catch(function() {
+    if (callback) callback();
+  });
+}
+
 // Initialize: render from cache instantly, then sync Firestore in background
 (function initApp() {
   var cached = getProducts();
@@ -226,8 +241,12 @@ function syncFromFirestore(callback) {
     allProducts = getAllProductsFlat();
   }
   renderAllProductGrids();
+  renderCollections();
   syncFromFirestore(function() {
     renderAllProductGrids();
+  });
+  syncCollectionsFromFirestore(function() {
+    renderCollections();
   });
   syncUsersFromFirestore();
 })();
@@ -280,6 +299,29 @@ function renderAllProductGrids() {
   if (products.wallets) renderProducts(products.wallets, 'walletsGrid');
   var premium = allProducts.filter(function(p) { return p.premium; });
   if (premium.length > 0) renderProducts(premium, 'premiumGrid');
+}
+
+// ===== SHOP BY COLLECTION =====
+function getCollections() {
+  var d = localStorage.getItem('gentifyCollections');
+  if (d) { var p = JSON.parse(d); if (p && p.length > 0) return p; }
+  return [
+    { name: 'Caps', image: '', link: 'caps.html' },
+    { name: 'Wallets', image: '', link: 'wallets.html' },
+    { name: 'Watches', image: '', link: 'watches.html' }
+  ];
+}
+
+function renderCollections() {
+  var grid = document.getElementById('collectionsGrid');
+  if (!grid) return;
+  var cols = getCollections();
+  grid.innerHTML = cols.map(function(c) {
+    var img = c.image ? '<img src="' + c.image + '" alt="' + c.name + '" />' : '';
+    return '<a href="' + c.link + '" class="collection-card">' +
+      img + '<div class="overlay"></div>' +
+      '<span class="col-name">' + c.name + '</span></a>';
+  }).join('');
 }
 
 // ===== QUICK ADD =====

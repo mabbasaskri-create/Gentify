@@ -19,6 +19,7 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
 var PRODUCTS_DOC = doc(db, "catalog", "products");
+var COLLECTIONS_DOC = doc(db, "catalog", "collections");
 
 getRedirectResult(auth).then(function() {}).catch(function() {});
 
@@ -35,6 +36,21 @@ window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callba
 
 window.syncProductsToFirestore = function(prods) {
   return setDoc(PRODUCTS_DOC, { dataJson: JSON.stringify(prods), updated: Date.now() });
+};
+
+window.syncCollectionsToFirestore = function(data) {
+  return setDoc(COLLECTIONS_DOC, { dataJson: JSON.stringify(data), updated: Date.now() });
+};
+
+window.loadCollectionsFromFirestore = function() {
+  return getDoc(COLLECTIONS_DOC).then(function(snap) {
+    if (snap.exists()) {
+      var d = snap.data();
+      if (d.dataJson) return { data: JSON.parse(d.dataJson), updated: d.updated };
+      if (d.data) return { data: d.data, updated: d.updated };
+    }
+    return null;
+  });
 };
 
 window.loadProductsFromFirestore = function() {

@@ -185,6 +185,41 @@
       </div>
     </div>
 
+    <div class="admin-section">
+      <h3>Shop by Collection</h3>
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:12px">Manage collection images shown on the homepage below Premium Picks.</p>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Collection</th><th>Image</th><th>Link</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="collectionsBody"></tbody>
+        </table>
+      </div>
+      <div class="admin-collection-form" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin:0">
+          <label>Collection Name</label>
+          <input type="text" id="colName" value="" placeholder="e.g. Caps" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Image URL</label>
+          <input type="text" id="colImage" value="" placeholder="https://example.com/image.jpg" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Link Page</label>
+          <select id="colLink" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%">
+            <option value="caps.html">Caps</option>
+            <option value="wallets.html">Wallets</option>
+            <option value="watches.html">Watches</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:end;gap:8px">
+          <button class="submit-btn" onclick="saveCollection()" style="padding:8px 20px;font-size:0.85rem">Save Collection</button>
+          <button class="cancel-btn" onclick="resetCollectionForm()" style="padding:8px 16px;font-size:0.85rem">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <div class="admin-section" style="border:2px solid #e74c3c;border-radius:8px;padding:20px;margin-top:32px">
       <h3 style="color:#e74c3c">&#x26A0; Danger Zone</h3>
       <p style="color:var(--gray);font-size:0.88rem;margin-bottom:12px">Delete all products, users, orders, and cart data from Firestore and localStorage. This cannot be undone.</p>
@@ -216,6 +251,9 @@
 
 <div class="toast" id="toast"></div>
 
+<a href="https://wa.me/923256646684" target="_blank" class="whatsapp-float" aria-label="Chat on WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
 <script src="script.js" defer></script>
 <script>
 function loadAdminData() {
@@ -254,6 +292,7 @@ function loadAdminData() {
     loadProductsTable();
     loadUsersTable();
     loadAllOrders();
+    loadCollectionsTable();
   }).catch(function() {
     products = getProducts();
     allProducts = getAllProductsFlat();
@@ -261,6 +300,7 @@ function loadAdminData() {
     loadProductsTable();
     loadUsersTable();
     loadAllOrders();
+    loadCollectionsTable();
   });
 }
 
@@ -695,6 +735,75 @@ function clearAllFirestoreData() {
   }).catch(function(e) {
     log.innerHTML = '<span style="color:#c0392b">Error: ' + e.message + '</span>';
   });
+}
+
+var editingColIdx = null;
+
+function getCollections() {
+  var d = localStorage.getItem('gentifyCollections');
+  if (d) { var p = JSON.parse(d); if (p && p.length > 0) return p; }
+  return [
+    { name: 'Caps', image: '', link: 'caps.html' },
+    { name: 'Wallets', image: '', link: 'wallets.html' },
+    { name: 'Watches', image: '', link: 'watches.html' }
+  ];
+}
+
+function saveCollections(data) {
+  localStorage.setItem('gentifyCollections', JSON.stringify(data));
+  if (typeof window.syncCollectionsToFirestore === 'function') {
+    window.syncCollectionsToFirestore(data).catch(function() {});
+  }
+  loadCollectionsTable();
+  if (typeof renderCollections === 'function') renderCollections();
+}
+
+function loadCollectionsTable() {
+  var cols = getCollections();
+  var tbody = document.getElementById('collectionsBody');
+  tbody.innerHTML = cols.map(function(c, i) {
+    var img = c.image ? '<img src="' + c.image + '" style="width:50px;height:50px;object-fit:cover;border-radius:6px" />' : '<span style="color:var(--gray)">No image</span>';
+    return '<tr><td><strong>' + c.name + '</strong></td><td>' + img + '</td><td>' + c.link + '</td><td>' +
+      '<button class="edit-btn" onclick="editCollection(' + i + ')">Edit</button> ' +
+      '<button class="delete-btn" onclick="deleteCollection(' + i + ')">Delete</button></td></tr>';
+  }).join('');
+}
+
+function editCollection(idx) {
+  var cols = getCollections();
+  var c = cols[idx];
+  editingColIdx = idx;
+  document.getElementById('colName').value = c.name;
+  document.getElementById('colImage').value = c.image || '';
+  document.getElementById('colLink').value = c.link;
+}
+
+function resetCollectionForm() {
+  editingColIdx = null;
+  document.getElementById('colName').value = '';
+  document.getElementById('colImage').value = '';
+  document.getElementById('colLink').value = 'caps.html';
+}
+
+function deleteCollection(idx) {
+  var cols = getCollections();
+  cols.splice(idx, 1);
+  saveCollections(cols);
+}
+
+function saveCollection() {
+  var name = document.getElementById('colName').value.trim();
+  var image = document.getElementById('colImage').value.trim();
+  var link = document.getElementById('colLink').value;
+  if (!name) { showToast('Please enter a collection name.'); return; }
+  var cols = getCollections();
+  if (editingColIdx !== null && editingColIdx < cols.length) {
+    cols[editingColIdx] = { name: name, image: image, link: link };
+  } else {
+    cols.push({ name: name, image: image, link: link });
+  }
+  saveCollections(cols);
+  resetCollectionForm();
 }
 
 function previewStore(mode) {
