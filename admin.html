@@ -196,14 +196,10 @@
           <tbody id="collectionsBody"></tbody>
         </table>
       </div>
-      <div class="admin-collection-form" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="admin-collection-form" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="form-group" style="margin:0">
           <label>Collection Name</label>
           <input type="text" id="colName" value="" placeholder="e.g. Caps" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%" />
-        </div>
-        <div class="form-group" style="margin:0">
-          <label>Image URL</label>
-          <input type="text" id="colImage" value="" placeholder="https://example.com/image.jpg" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;width:100%" />
         </div>
         <div class="form-group" style="margin:0">
           <label>Link Page</label>
@@ -213,7 +209,21 @@
             <option value="watches.html">Watches</option>
           </select>
         </div>
-        <div style="display:flex;align-items:end;gap:8px">
+        <div class="form-group" style="margin:0;grid-column:1/-1">
+          <label>Collection Image</label>
+          <div id="colImagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;min-height:40px">
+            <span style="color:var(--gray);font-size:0.85rem">No image selected.</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+            <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Image<input type="file" id="colImageInput" accept="image/*" style="display:none" /></label>
+            <button type="button" class="url-btn" onclick="toggleColUrlInput()" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
+          </div>
+          <div id="colUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
+            <input type="text" id="colImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
+            <button onclick="addColUrlImage()" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
           <button class="submit-btn" onclick="saveCollection()" style="padding:8px 20px;font-size:0.85rem">Save Collection</button>
           <button class="cancel-btn" onclick="resetCollectionForm()" style="padding:8px 16px;font-size:0.85rem">Cancel</button>
         </div>
@@ -738,6 +748,35 @@ function clearAllFirestoreData() {
 }
 
 var editingColIdx = null;
+var colPendingImage = '';
+
+function renderColImagePreview() {
+  var preview = document.getElementById('colImagePreview');
+  if (!colPendingImage) {
+    preview.innerHTML = '<span style="color:var(--gray);font-size:0.85rem">No image selected.</span>';
+    return;
+  }
+  preview.innerHTML = '<div style="position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1.5px solid var(--border);flex-shrink:0">' +
+    '<img src="' + colPendingImage + '" style="width:100%;height:100%;object-fit:cover" />' +
+    '<button onclick="removeColImage()" style="position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;border:none;background:#dc2626;color:#fff;font-size:13px;line-height:20px;text-align:center;cursor:pointer;padding:0">&times;</button></div>';
+}
+
+function removeColImage() { colPendingImage = ''; renderColImagePreview(); }
+
+function toggleColUrlInput() {
+  var row = document.getElementById('colUrlRow');
+  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addColUrlImage() {
+  var input = document.getElementById('colImageUrl');
+  var url = input.value.trim();
+  if (!url) return;
+  colPendingImage = url;
+  renderColImagePreview();
+  input.value = '';
+  document.getElementById('colUrlRow').style.display = 'none';
+}
 
 function getCollections() {
   var d = localStorage.getItem('gentifyCollections');
@@ -774,26 +813,30 @@ function editCollection(idx) {
   var c = cols[idx];
   editingColIdx = idx;
   document.getElementById('colName').value = c.name;
-  document.getElementById('colImage').value = c.image || '';
+  colPendingImage = c.image || '';
+  renderColImagePreview();
   document.getElementById('colLink').value = c.link;
 }
 
 function resetCollectionForm() {
   editingColIdx = null;
   document.getElementById('colName').value = '';
-  document.getElementById('colImage').value = '';
+  colPendingImage = '';
+  renderColImagePreview();
   document.getElementById('colLink').value = 'caps.html';
+  document.getElementById('colUrlRow').style.display = 'none';
 }
 
 function deleteCollection(idx) {
   var cols = getCollections();
   cols.splice(idx, 1);
   saveCollections(cols);
+  resetCollectionForm();
 }
 
 function saveCollection() {
   var name = document.getElementById('colName').value.trim();
-  var image = document.getElementById('colImage').value.trim();
+  var image = colPendingImage;
   var link = document.getElementById('colLink').value;
   if (!name) { showToast('Please enter a collection name.'); return; }
   var cols = getCollections();
@@ -818,6 +861,14 @@ function previewStore(mode) {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('apImages').addEventListener('change', function() {
     addFilesToPending(this.files);
+    this.value = '';
+  });
+  document.getElementById('colImageInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      filesToBase64([this.files[0]]).then(function(images) {
+        if (images[0]) { colPendingImage = images[0]; renderColImagePreview(); }
+      });
+    }
     this.value = '';
   });
   window.onAuthStateChanged(function() {
