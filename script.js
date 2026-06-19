@@ -214,19 +214,19 @@ function syncFromFirestore(callback) {
   });
 }
 
-// Initialize: wait for Firestore sync first, use defaults only as fallback
+// Initialize: render from cache instantly, then sync Firestore in background
 (function initApp() {
+  var cached = getProducts();
+  if (Object.keys(cached).length === 0) {
+    localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
+    products = DEFAULT_PRODUCTS;
+    allProducts = getAllProductsFlat();
+  } else {
+    products = cached;
+    allProducts = getAllProductsFlat();
+  }
+  renderAllProductGrids();
   syncFromFirestore(function() {
-    var prods = getProducts();
-    if (Object.keys(prods).length === 0) {
-      localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
-      products = DEFAULT_PRODUCTS;
-      allProducts = getAllProductsFlat();
-      syncToFirestore(DEFAULT_PRODUCTS);
-    } else {
-      products = prods;
-      allProducts = getAllProductsFlat();
-    }
     renderAllProductGrids();
   });
   syncUsersFromFirestore();
