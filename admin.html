@@ -641,6 +641,7 @@ function finishSaveProduct(name, category, price, desc, images, sizesStr, colors
   var payload = {
     name: name,
     category: category.charAt(0).toUpperCase() + category.slice(1),
+    categoryKey: category,
     price: price,
     desc: desc,
     images: images,
@@ -675,7 +676,7 @@ function editProduct(id) {
   pendingImages = p.images.slice();
   document.getElementById('addProductTitle').textContent = 'Edit Product';
   document.getElementById('apName').value = p.name;
-  document.getElementById('apCategory').value = p.category ? p.category.toLowerCase() : 'caps';
+  document.getElementById('apCategory').value = p.categoryKey || (p.category ? p.category.toLowerCase() : 'caps');
   document.getElementById('apPrice').value = p.price;
   document.getElementById('apDesc').value = p.desc;
   document.getElementById('apImages').value = '';

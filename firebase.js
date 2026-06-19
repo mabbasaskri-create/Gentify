@@ -36,6 +36,7 @@ window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
 
 window.syncProductsToFirestore = function(prods) {
+  var syncTime = Date.now();
   var allProducts = [];
   Object.keys(prods).forEach(function(k) {
     allProducts = allProducts.concat(prods[k]);
@@ -59,6 +60,8 @@ window.syncProductsToFirestore = function(prods) {
     allProducts.forEach(function(p) {
       var data = Object.assign({}, p);
       delete data._categoryKey;
+      data.categoryKey = (p.categoryKey || p.category || 'caps').toLowerCase();
+      data._updated = syncTime;
       promises.push(setDoc(doc(db, "products", p.id), data));
     });
 
@@ -87,9 +90,11 @@ window.loadCollectionsFromFirestore = function() {
 window.loadProductsFromFirestore = function() {
   return getDocs(PRODUCTS_COL).then(function(snapshot) {
     var allProducts = [];
+    var maxUpdated = 0;
     snapshot.forEach(function(d) {
       var p = d.data();
       p.id = d.id;
+      if (p._updated && p._updated > maxUpdated) maxUpdated = p._updated;
       allProducts.push(p);
     });
 
@@ -97,12 +102,12 @@ window.loadProductsFromFirestore = function() {
 
     var grouped = {};
     allProducts.forEach(function(p) {
-      var cat = (p.category || 'caps').toLowerCase();
+      var cat = (p.categoryKey || p.category || 'caps').toLowerCase();
       if (!grouped[cat]) grouped[cat] = [];
       grouped[cat].push(p);
     });
 
-    return { data: grouped, updated: Date.now() };
+    return { data: grouped, updated: maxUpdated || Date.now() };
   });
 };
 

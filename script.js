@@ -133,8 +133,9 @@ function formatPrice(amount) {
 
 function addProduct(product) {
   var prods = getProducts();
-  var cat = product._categoryKey || 'caps';
+  var cat = product._categoryKey || product.categoryKey || 'caps';
   if (!prods[cat]) prods[cat] = [];
+  if (!product.categoryKey) product.categoryKey = cat;
   prods[cat].push(product);
   delete product._categoryKey;
   saveProducts(prods);
@@ -152,7 +153,8 @@ function updateProduct(id, updates) {
     });
   });
   if (found) {
-    var targetCat = newCat || 'caps';
+    var targetCat = newCat || found.categoryKey || 'caps';
+    found.categoryKey = targetCat;
     if (!prods[targetCat]) prods[targetCat] = [];
     prods[targetCat].push(found);
   }
