@@ -203,12 +203,7 @@
             </div>
             <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
               <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Image<input type="file" id="bannerDesktopInput" accept="image/*" style="display:none" /></label>
-              <button type="button" class="url-btn" onclick="toggleBannerUrl('desktop')" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
               <button type="button" class="delete-btn" onclick="removeBanner('desktop')" style="padding:6px 14px;font-size:0.82rem">Remove</button>
-            </div>
-            <div id="bannerDesktopUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
-              <input type="text" id="bannerDesktopUrl" placeholder="https://example.com/banner.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
-              <button onclick="addBannerUrl('desktop')" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
             </div>
           </div>
           <div class="form-group">
@@ -218,17 +213,9 @@
             </div>
             <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
               <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Image<input type="file" id="bannerMobileInput" accept="image/*" style="display:none" /></label>
-              <button type="button" class="url-btn" onclick="toggleBannerUrl('mobile')" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
               <button type="button" class="delete-btn" onclick="removeBanner('mobile')" style="padding:6px 14px;font-size:0.82rem">Remove</button>
             </div>
-            <div id="bannerMobileUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
-              <input type="text" id="bannerMobileUrl" placeholder="https://example.com/banner-mobile.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
-              <button onclick="addBannerUrl('mobile')" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
-            </div>
           </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <button class="submit-btn" onclick="saveBannerSettings()">Save Banner</button>
         </div>
       </div>
     </div>
@@ -992,20 +979,14 @@ function previewStore(mode) {
 }
 
 // ===== BANNER MANAGEMENT =====
-var bannerDesktopImage = '';
-var bannerMobileImage = '';
-
 function getBannerData() {
   var d = localStorage.getItem('gentifyBanner');
-  if (d) { return JSON.parse(d); }
+  if (d) { try { return JSON.parse(d); } catch(e) {} }
   return { desktop: '', mobile: '' };
 }
 
 function saveBannerData(data) {
   localStorage.setItem('gentifyBanner', JSON.stringify(data));
-  if (typeof window.syncBannerToFirestore === 'function') {
-    window.syncBannerToFirestore(data).catch(function() {});
-  }
 }
 
 function renderBannerPreview(type) {
@@ -1021,29 +1002,8 @@ function renderBannerPreview(type) {
 }
 
 function loadBannerSettings() {
-  var data = getBannerData();
-  bannerDesktopImage = data.desktop || '';
-  bannerMobileImage = data.mobile || '';
   renderBannerPreview('desktop');
   renderBannerPreview('mobile');
-}
-
-function toggleBannerUrl(type) {
-  var row = document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'UrlRow');
-  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
-}
-
-function addBannerUrl(type) {
-  var input = document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'Url');
-  var url = input.value.trim();
-  if (!url) return;
-  var data = getBannerData();
-  data[type] = url;
-  saveBannerData(data);
-  renderBannerPreview(type);
-  input.value = '';
-  document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'UrlRow').style.display = 'none';
-  showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' banner added!');
 }
 
 function removeBanner(type) {
@@ -1052,12 +1012,6 @@ function removeBanner(type) {
   saveBannerData(data);
   renderBannerPreview(type);
   showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' banner removed.');
-}
-
-function saveBannerSettings() {
-  var data = { desktop: bannerDesktopImage, mobile: bannerMobileImage };
-  saveBannerData(data);
-  showToast('Banner saved successfully!');
 }
 
 document.addEventListener('DOMContentLoaded', function() {

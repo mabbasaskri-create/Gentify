@@ -229,6 +229,7 @@ function getBannerData() {
 function renderBanner() {
   var hero = document.getElementById('hero');
   var bannerImg = document.getElementById('bannerImg');
+  var bannerPicture = document.getElementById('bannerPicture');
   var bannerSource = document.getElementById('bannerSourceMobile');
   var heroContent = document.getElementById('heroContent');
   if (!bannerImg) return;
@@ -237,15 +238,27 @@ function renderBanner() {
   var hasMobile = data.mobile && data.mobile.length > 0;
   if (hasDesktop) {
     bannerImg.src = data.desktop;
-    if (bannerSource && hasMobile) {
-      bannerSource.srcset = data.mobile;
+    if (bannerSource) {
+      if (hasMobile) {
+        bannerSource.srcset = data.mobile;
+        bannerSource.style.display = '';
+      } else {
+        bannerSource.srcset = '';
+        bannerSource.style.display = 'none';
+      }
     }
     if (hero) hero.classList.add('banner-has-image');
   } else if (hasMobile) {
     bannerImg.src = data.mobile;
+    if (bannerSource) bannerSource.style.display = 'none';
     if (hero) hero.classList.add('banner-has-image');
   } else {
     if (hero) hero.classList.remove('banner-has-image');
+    bannerImg.src = '';
+    if (bannerSource) {
+      bannerSource.srcset = '';
+      bannerSource.style.display = '';
+    }
   }
 }
 
