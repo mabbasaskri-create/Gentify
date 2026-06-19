@@ -276,7 +276,7 @@ function renderProducts(list, containerId) {
         <div class="product-name">${p.name}</div>
         <div class="product-desc">${p.desc}</div>
         <div class="product-footer">
-          <span class="product-price">${formatPrice(p.price)}</span>
+          <span class="product-price">${formatPrice(p.price)}${p.retailPrice && p.retailPrice > p.price ? ' <span class="retail-price" style="text-decoration:line-through;color:var(--gray);margin-left:6px;font-size:0.82rem">' + formatPrice(p.retailPrice) + '</span>' : ''}</span>
           <button class="add-btn" onclick="event.stopPropagation(); quickAdd('${p.id}')">Add to Cart</button>
         </div>
       </div>
@@ -335,7 +335,7 @@ function openProductDetail(id) {
 
   document.getElementById('detailCategory').textContent = product.category;
   document.getElementById('detailName').textContent = product.name;
-  document.getElementById('detailPrice').textContent = formatPrice(product.price);
+  document.getElementById('detailPrice').innerHTML = formatPrice(product.price) + (product.retailPrice && product.retailPrice > product.price ? ' <span class="retail-price" style="text-decoration:line-through;color:var(--gray);margin-left:8px;font-size:0.9rem">' + formatPrice(product.retailPrice) + '</span>' : '');
   document.getElementById('detailDesc').textContent = product.desc;
   document.getElementById('detailQty').textContent = '1';
 
@@ -458,7 +458,7 @@ function renderProductDetailPage(id) {
 
   document.getElementById('pdBreadcrumb').innerHTML = '<a href="' + pdProduct.category.toLowerCase() + '.html">' + pdProduct.category + '</a> <span class="pd-breadcrumb-sep">/</span> <span>' + pdProduct.name + '</span>';
   document.getElementById('pdName').textContent = pdProduct.name;
-  document.getElementById('pdPrice').textContent = formatPrice(pdProduct.price);
+  document.getElementById('pdPrice').innerHTML = formatPrice(pdProduct.price) + (pdProduct.retailPrice && pdProduct.retailPrice > pdProduct.price ? ' <span class="retail-price" style="text-decoration:line-through;color:var(--gray);margin-left:8px;font-size:0.9rem">' + formatPrice(pdProduct.retailPrice) + '</span>' : '');
   document.getElementById('pdDesc').textContent = pdProduct.desc;
   document.getElementById('pdQty').textContent = '1';
 

@@ -90,7 +90,7 @@
       <div class="admin-table-wrap">
         <table class="admin-table" id="productsTable">
           <thead>
-            <tr><th>Name</th><th>Category</th><th>Price (PKR)</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Category</th><th>Price (PKR)</th><th>Retail (PKR)</th><th>Actions</th></tr>
           </thead>
           <tbody id="productsBody"></tbody>
         </table>
@@ -116,6 +116,10 @@
           <div class="form-group">
             <label>Price (PKR)</label>
             <input type="number" id="apPrice" step="0.01" min="0" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Retail Price (PKR) <small style="color:var(--gray);font-weight:400">(original price, shown with strike-through)</small></label>
+            <input type="number" id="apRetailPrice" step="0.01" min="0" placeholder="0.00" />
           </div>
         </div>
         <div class="form-group">
@@ -374,11 +378,12 @@ function loadProductsTable() {
   var prods = getAllProductsFlat();
   var tbody = document.getElementById('productsBody');
   if (prods.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:24px">No products yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:24px">No products yet.</td></tr>';
     return;
   }
   tbody.innerHTML = prods.map(function(p) {
-    return '<tr><td>' + p.name + '</td><td>' + p.category + '</td><td>Rs. ' + Math.round(p.price).toLocaleString('en-PK') + '</td><td>' +
+    var retail = p.retailPrice ? 'Rs. ' + Math.round(p.retailPrice).toLocaleString('en-PK') : '-';
+    return '<tr><td>' + p.name + '</td><td>' + p.category + '</td><td>Rs. ' + Math.round(p.price).toLocaleString('en-PK') + '</td><td>' + retail + '</td><td>' +
       '<button class="edit-btn" onclick="editProduct(\'' + p.id + '\')">Edit</button> ' +
       '<button class="delete-btn" onclick="deleteProductConfirm(\'' + p.id + '\')">Delete</button></td></tr>';
   }).join('');
@@ -490,6 +495,7 @@ function showAddProductForm() {
   document.getElementById('apName').value = '';
   document.getElementById('apCategory').value = 'caps';
   document.getElementById('apPrice').value = '';
+  document.getElementById('apRetailPrice').value = '';
   document.getElementById('apDesc').value = '';
   document.getElementById('apImages').value = '';
   document.getElementById('apSizes').value = '';
@@ -557,6 +563,7 @@ function saveProductForm() {
   var name = document.getElementById('apName').value.trim();
   var category = document.getElementById('apCategory').value;
   var price = parseFloat(document.getElementById('apPrice').value);
+  var retailPrice = parseFloat(document.getElementById('apRetailPrice').value) || null;
   var desc = document.getElementById('apDesc').value.trim();
   var sizesStr = document.getElementById('apSizes').value.trim();
   var colorsStr = document.getElementById('apColors').value.trim();
@@ -578,7 +585,7 @@ function saveProductForm() {
     return;
   }
 
-  finishSaveProduct(name, category, price, desc, pendingImages, sizesStr, colorsStr, badge, premium);
+  finishSaveProduct(name, category, price, retailPrice, desc, pendingImages, sizesStr, colorsStr, badge, premium);
 }
 
 function colorNameToHex(name) {
@@ -665,7 +672,7 @@ function hslToHex(h, s, l) {
   return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
 }
 
-function finishSaveProduct(name, category, price, desc, images, sizesStr, colorsStr, badge, premium) {
+function finishSaveProduct(name, category, price, retailPrice, desc, images, sizesStr, colorsStr, badge, premium) {
   var sizes = sizesStr ? sizesStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : null;
   var colors = colorsStr ? colorsStr.split(',').map(function(s) {
     return { name: s.trim(), hex: colorNameToHex(s.trim()) };
@@ -676,6 +683,7 @@ function finishSaveProduct(name, category, price, desc, images, sizesStr, colors
     category: category.charAt(0).toUpperCase() + category.slice(1),
     categoryKey: category,
     price: price,
+    retailPrice: retailPrice && retailPrice > price ? retailPrice : null,
     desc: desc,
     images: images,
     sizes: sizes,
@@ -711,6 +719,7 @@ function editProduct(id) {
   document.getElementById('apName').value = p.name;
   document.getElementById('apCategory').value = p.categoryKey || (p.category ? p.category.toLowerCase() : 'caps');
   document.getElementById('apPrice').value = p.price;
+  document.getElementById('apRetailPrice').value = p.retailPrice || '';
   document.getElementById('apDesc').value = p.desc;
   document.getElementById('apImages').value = '';
   document.getElementById('apSizes').value = p.sizes ? p.sizes.join(', ') : '';
