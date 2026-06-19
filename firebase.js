@@ -18,7 +18,8 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
-var PRODUCTS_DOC = doc(db, "catalog", "products");
+
+var PRODUCTS_COL = collection(db, "products");
 var COLLECTIONS_DOC = doc(db, "catalog", "collections");
 
 getRedirectResult(auth).then(function() {}).catch(function() {});
@@ -35,7 +36,37 @@ window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
 
 window.syncProductsToFirestore = function(prods) {
-  return setDoc(PRODUCTS_DOC, { dataJson: JSON.stringify(prods), updated: Date.now() });
+  var allProducts = [];
+  Object.keys(prods).forEach(function(k) {
+    allProducts = allProducts.concat(prods[k]);
+  });
+
+  return getDocs(PRODUCTS_COL).then(function(snapshot) {
+    var existingIds = {};
+    snapshot.forEach(function(d) { existingIds[d.id] = true; });
+
+    var newIds = {};
+    allProducts.forEach(function(p) { newIds[p.id] = true; });
+
+    var promises = [];
+
+    Object.keys(existingIds).forEach(function(id) {
+      if (!newIds[id]) {
+        promises.push(deleteDoc(doc(db, "products", id)));
+      }
+    });
+
+    allProducts.forEach(function(p) {
+      var data = Object.assign({}, p);
+      delete data._categoryKey;
+      promises.push(setDoc(doc(db, "products", p.id), data));
+    });
+
+    // Clean up old single-document format if it exists
+    promises.push(deleteDoc(doc(db, "catalog", "products")).catch(function() {}));
+
+    return Promise.all(promises);
+  });
 };
 
 window.syncCollectionsToFirestore = function(data) {
@@ -54,13 +85,24 @@ window.loadCollectionsFromFirestore = function() {
 };
 
 window.loadProductsFromFirestore = function() {
-  return getDoc(PRODUCTS_DOC).then(function(snap) {
-    if (snap.exists()) {
-      var d = snap.data();
-      if (d.dataJson) return { data: JSON.parse(d.dataJson), updated: d.updated };
-      if (d.data) return { data: d.data, updated: d.updated };
-    }
-    return null;
+  return getDocs(PRODUCTS_COL).then(function(snapshot) {
+    var allProducts = [];
+    snapshot.forEach(function(d) {
+      var p = d.data();
+      p.id = d.id;
+      allProducts.push(p);
+    });
+
+    if (allProducts.length === 0) return null;
+
+    var grouped = {};
+    allProducts.forEach(function(p) {
+      var cat = (p.category || 'caps').toLowerCase();
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(p);
+    });
+
+    return { data: grouped, updated: Date.now() };
   });
 };
 

@@ -758,7 +758,7 @@ function clearAllFirestoreData() {
 
   var promises = [];
 
-  // Clear products catalog
+  // Clear products catalog (also cleans up old single-document format)
   if (typeof window.syncProductsToFirestore === 'function') {
     promises.push(window.syncProductsToFirestore({}));
   }
