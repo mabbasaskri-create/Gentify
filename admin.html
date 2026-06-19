@@ -218,6 +218,10 @@
           </div>
         </div>
       </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button type="button" class="sync-btn" onclick="syncBanner()" id="syncBannerBtn">Sync to Firebase</button>
+        <span id="bannerSyncMsg" style="font-size:0.82rem;color:var(--gray);align-self:center"></span>
+      </div>
     </div>
 
     <div class="admin-section">
@@ -1039,6 +1043,40 @@ function uploadBannerImage(file, type) {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function syncBanner() {
+  var btn = document.getElementById('syncBannerBtn');
+  var msg = document.getElementById('bannerSyncMsg');
+  var data = getBannerData();
+  if (!data.desktop && !data.mobile) {
+    msg.textContent = 'No banner data to sync. Upload a banner first.';
+    msg.style.color = 'var(--gray)';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  msg.textContent = '';
+  if (typeof window.syncBannerToFirestore === 'function') {
+    window.syncBannerToFirestore(data).then(function() {
+      btn.disabled = false;
+      btn.textContent = 'Sync to Firebase';
+      msg.textContent = 'Banner synced!';
+      msg.style.color = '#2e7d32';
+      showToast('Banner synced to Firebase!');
+    }).catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Sync to Firebase';
+      msg.textContent = 'Sync failed: ' + (err.message || 'unknown error');
+      msg.style.color = '#dc2626';
+      showToast('Sync failed!');
+    });
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Sync to Firebase';
+    msg.textContent = 'Firebase sync not available.';
+    msg.style.color = 'var(--gray)';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -328,7 +328,6 @@ function renderProducts(list, containerId) {
       </div>
       <div class="product-info">
         <div class="product-name">${p.name}</div>
-        <div class="product-desc">${p.desc}</div>
         <div class="product-footer">
           <span class="product-price">${formatPrice(p.price)}${p.retailPrice && p.retailPrice > p.price ? ' <span class="retail-price" style="text-decoration:line-through;color:var(--gray);margin-left:6px;font-size:0.82rem">' + formatPrice(p.retailPrice) + '</span>' : ''}</span>
           <button class="add-btn" onclick="event.stopPropagation(); quickAdd('${p.id}')">Add to Cart</button>
