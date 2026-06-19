@@ -227,16 +227,10 @@ function loadAdminData() {
     var firestoreUsers = results[1];
 
     if (prodResult && prodResult.data && Object.keys(prodResult.data).length > 0) {
-      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
-      if (prodResult.updated > localTS) {
-        localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
-        localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
-        products = prodResult.data;
-        allProducts = getAllProductsFlat();
-      } else {
-        products = getProducts();
-        allProducts = getAllProductsFlat();
-      }
+      localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
+      localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+      products = prodResult.data;
+      allProducts = getAllProductsFlat();
     } else {
       var stored = localStorage.getItem('gentifyProducts');
       if (stored) {

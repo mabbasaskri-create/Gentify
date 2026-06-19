@@ -2,6 +2,8 @@
 // Firebase is initialized in firebase.js (modular SDK)
 
 window.onAuthStateChanged(function(firebaseUser) {
+  var page = window.location.pathname.split('/').pop();
+
   if (firebaseUser) {
     var sessionUser = { name: firebaseUser.displayName || 'Google User', email: firebaseUser.email, uid: firebaseUser.uid };
     saveCurrentUser(sessionUser);
@@ -37,6 +39,13 @@ window.onAuthStateChanged(function(firebaseUser) {
           }
         }
       }).catch(function() {});
+    }
+
+    if (page === 'login.html' || page === 'signup.html') {
+      var params = new URLSearchParams(window.location.search);
+      var redirectPath = params.get('redirect') || 'orders.html';
+      window.location.href = redirectPath;
+      return;
     }
   } else {
     saveCurrentUser(null);
@@ -194,41 +203,30 @@ function syncToFirestore(prods) {
 function syncFromFirestore(callback) {
   loadProdFromFirestore().then(function(result) {
     if (result && result.data && Object.keys(result.data).length > 0) {
-      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0');
-      if (result.updated > localTS || !localStorage.getItem('gentifyProducts')) {
-        localStorage.setItem('gentifyProductsTS', String(result.updated));
-        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-        products = result.data;
-        allProducts = getAllProductsFlat();
-      } else {
-        products = getProducts();
-        allProducts = getAllProductsFlat();
-      }
-    } else {
-      products = getProducts();
+      localStorage.setItem('gentifyProductsTS', String(result.updated));
+      localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+      products = result.data;
       allProducts = getAllProductsFlat();
     }
     if (callback) callback();
   }).catch(function() {
-    products = getProducts();
-    allProducts = getAllProductsFlat();
     if (callback) callback();
   });
 }
 
-// Initialize: render from localStorage immediately, then sync from Firestore
+// Initialize: wait for Firestore sync first, use defaults only as fallback
 (function initApp() {
-  var cached = getProducts();
-  if (Object.keys(cached).length === 0) {
-    localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
-    products = DEFAULT_PRODUCTS;
-    allProducts = getAllProductsFlat();
-  } else {
-    products = cached;
-    allProducts = getAllProductsFlat();
-  }
-  renderAllProductGrids();
   syncFromFirestore(function() {
+    var prods = getProducts();
+    if (Object.keys(prods).length === 0) {
+      localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
+      products = DEFAULT_PRODUCTS;
+      allProducts = getAllProductsFlat();
+      syncToFirestore(DEFAULT_PRODUCTS);
+    } else {
+      products = prods;
+      allProducts = getAllProductsFlat();
+    }
     renderAllProductGrids();
   });
   syncUsersFromFirestore();

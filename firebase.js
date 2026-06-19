@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
@@ -20,7 +20,16 @@ const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
 var PRODUCTS_DOC = doc(db, "catalog", "products");
 
-window.signInWithGoogle = function() { return signInWithPopup(auth, googleProvider); };
+getRedirectResult(auth).then(function() {}).catch(function() {});
+
+window.signInWithGoogle = function() {
+  return signInWithPopup(auth, googleProvider).catch(function(err) {
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+      return signInWithRedirect(auth, googleProvider);
+    }
+    throw err;
+  });
+};
 window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
 
