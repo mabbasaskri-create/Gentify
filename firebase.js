@@ -135,3 +135,27 @@ window.setFirestoreUser = function(email, data) {
 window.deleteFirestoreUser = function(email) {
   return deleteDoc(doc(db, "users", email));
 };
+
+// ===== BANNER (Firestore) =====
+var BANNER_DOC = doc(db, "catalog", "banner");
+
+window.syncBannerToFirestore = function(data) {
+  return setDoc(BANNER_DOC, { dataJson: JSON.stringify(data), updated: Date.now() });
+};
+
+window.syncBannerFromFirestore = function(callback) {
+  getDoc(BANNER_DOC).then(function(snap) {
+    if (snap.exists()) {
+      var d = snap.data();
+      if (d.dataJson) {
+        var parsed = JSON.parse(d.dataJson);
+        localStorage.setItem('gentifyBanner', JSON.stringify(parsed));
+        if (callback) callback();
+        return;
+      }
+    }
+    if (callback) callback();
+  }).catch(function() {
+    if (callback) callback();
+  });
+};

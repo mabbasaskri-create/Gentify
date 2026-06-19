@@ -192,6 +192,48 @@
     </div>
 
     <div class="admin-section">
+      <h3>Banner Management</h3>
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:12px">Upload banner images for the homepage hero section. The entire image will always remain visible.</p>
+      <div class="admin-product-form" style="margin-bottom:16px">
+        <div class="form-row2">
+          <div class="form-group">
+            <label>Desktop Banner <small style="color:var(--gray);font-weight:400">(1920 &times; 1080 &mdash; 16:9)</small></label>
+            <div id="bannerDesktopPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;min-height:40px">
+              <span style="color:var(--gray);font-size:0.85rem">No desktop banner uploaded.</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+              <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Image<input type="file" id="bannerDesktopInput" accept="image/*" style="display:none" /></label>
+              <button type="button" class="url-btn" onclick="toggleBannerUrl('desktop')" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
+              <button type="button" class="delete-btn" onclick="removeBanner('desktop')" style="padding:6px 14px;font-size:0.82rem">Remove</button>
+            </div>
+            <div id="bannerDesktopUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
+              <input type="text" id="bannerDesktopUrl" placeholder="https://example.com/banner.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
+              <button onclick="addBannerUrl('desktop')" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Mobile Banner <small style="color:var(--gray);font-weight:400">(1080 &times; 1350 &mdash; 4:5)</small></label>
+            <div id="bannerMobilePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;min-height:40px">
+              <span style="color:var(--gray);font-size:0.85rem">No mobile banner uploaded.</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+              <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Image<input type="file" id="bannerMobileInput" accept="image/*" style="display:none" /></label>
+              <button type="button" class="url-btn" onclick="toggleBannerUrl('mobile')" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
+              <button type="button" class="delete-btn" onclick="removeBanner('mobile')" style="padding:6px 14px;font-size:0.82rem">Remove</button>
+            </div>
+            <div id="bannerMobileUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
+              <input type="text" id="bannerMobileUrl" placeholder="https://example.com/banner-mobile.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
+              <button onclick="addBannerUrl('mobile')" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="submit-btn" onclick="saveBannerSettings()">Save Banner</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-section">
       <h3>Shop by Collection</h3>
       <p style="color:var(--gray);font-size:0.88rem;margin-bottom:12px">Manage collection images shown on the homepage below Premium Picks.</p>
       <div class="admin-table-wrap">
@@ -345,6 +387,12 @@ function loadAdminData() {
     loadUsersTable();
     loadAllOrders();
     loadCollectionsTable();
+    if (typeof loadBannerSettings === 'function') loadBannerSettings();
+    if (typeof window.syncBannerFromFirestore === 'function') {
+      window.syncBannerFromFirestore(function() {
+        if (typeof loadBannerSettings === 'function') loadBannerSettings();
+      });
+    }
   }).catch(function() {
     products = getProducts();
     allProducts = getAllProductsFlat();
@@ -353,6 +401,7 @@ function loadAdminData() {
     loadUsersTable();
     loadAllOrders();
     loadCollectionsTable();
+    if (typeof loadBannerSettings === 'function') loadBannerSettings();
   });
 }
 
@@ -942,6 +991,75 @@ function previewStore(mode) {
   }
 }
 
+// ===== BANNER MANAGEMENT =====
+var bannerDesktopImage = '';
+var bannerMobileImage = '';
+
+function getBannerData() {
+  var d = localStorage.getItem('gentifyBanner');
+  if (d) { return JSON.parse(d); }
+  return { desktop: '', mobile: '' };
+}
+
+function saveBannerData(data) {
+  localStorage.setItem('gentifyBanner', JSON.stringify(data));
+  if (typeof window.syncBannerToFirestore === 'function') {
+    window.syncBannerToFirestore(data).catch(function() {});
+  }
+}
+
+function renderBannerPreview(type) {
+  var data = getBannerData();
+  var preview = document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'Preview');
+  var img = data[type] || '';
+  if (!img) {
+    preview.innerHTML = '<span style="color:var(--gray);font-size:0.85rem">No ' + type + ' banner uploaded.</span>';
+    return;
+  }
+  preview.innerHTML = '<div style="position:relative;width:120px;height:' + (type === 'desktop' ? '68' : '100') + 'px;border-radius:8px;overflow:hidden;border:1.5px solid var(--border)">' +
+    '<img src="' + img + '" style="width:100%;height:100%;object-fit:contain;background:#f0ece4" /></div>';
+}
+
+function loadBannerSettings() {
+  var data = getBannerData();
+  bannerDesktopImage = data.desktop || '';
+  bannerMobileImage = data.mobile || '';
+  renderBannerPreview('desktop');
+  renderBannerPreview('mobile');
+}
+
+function toggleBannerUrl(type) {
+  var row = document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'UrlRow');
+  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addBannerUrl(type) {
+  var input = document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'Url');
+  var url = input.value.trim();
+  if (!url) return;
+  var data = getBannerData();
+  data[type] = url;
+  saveBannerData(data);
+  renderBannerPreview(type);
+  input.value = '';
+  document.getElementById('banner' + type.charAt(0).toUpperCase() + type.slice(1) + 'UrlRow').style.display = 'none';
+  showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' banner added!');
+}
+
+function removeBanner(type) {
+  var data = getBannerData();
+  data[type] = '';
+  saveBannerData(data);
+  renderBannerPreview(type);
+  showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' banner removed.');
+}
+
+function saveBannerSettings() {
+  var data = { desktop: bannerDesktopImage, mobile: bannerMobileImage };
+  saveBannerData(data);
+  showToast('Banner saved successfully!');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('apImages').addEventListener('change', function() {
     addFilesToPending(this.files);
@@ -955,6 +1073,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     this.value = '';
   });
+  document.getElementById('bannerDesktopInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      filesToBase64([this.files[0]]).then(function(images) {
+        if (images[0]) {
+          var data = getBannerData();
+          data.desktop = images[0];
+          saveBannerData(data);
+          renderBannerPreview('desktop');
+          showToast('Desktop banner uploaded!');
+        }
+      });
+    }
+    this.value = '';
+  });
+  document.getElementById('bannerMobileInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      filesToBase64([this.files[0]]).then(function(images) {
+        if (images[0]) {
+          var data = getBannerData();
+          data.mobile = images[0];
+          saveBannerData(data);
+          renderBannerPreview('mobile');
+          showToast('Mobile banner uploaded!');
+        }
+      });
+    }
+    this.value = '';
+  });
   window.onAuthStateChanged(function() {
     var user = getCurrentUser();
     var isAdmin = user && user.email === 'm.abbas.askri@gmail.com';
@@ -962,6 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('adminContent').style.display = 'block';
       document.getElementById('adminLoginPrompt').style.display = 'none';
       loadAdminData();
+      loadBannerSettings();
     } else {
       document.getElementById('adminContent').style.display = 'none';
       document.getElementById('adminLoginPrompt').style.display = 'block';

@@ -80,7 +80,37 @@ nav {
   display: none;
 }
 
-/* ===== HERO ===== */
+/* ===== HERO / BANNER ===== */
+.banner-section {
+  position: relative;
+  width: 100%;
+  background: var(--cream);
+  display: flex; flex-direction: column;
+}
+
+.banner-wrap {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream);
+}
+
+.banner-wrap picture {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
 #hero {
   padding: 100px 5% 80px;
   min-height: 70vh;
@@ -89,7 +119,19 @@ nav {
   position: relative; overflow: hidden;
 }
 
-.hero-content { max-width: 780px; text-align: center; }
+#hero.banner-has-image {
+  padding: 0;
+  min-height: 0;
+}
+
+.hero-content {
+  max-width: 780px; text-align: center;
+  padding: 60px 5%;
+}
+
+#hero.banner-has-image .hero-content {
+  display: none;
+}
 
 .hero-eyebrow {
   font-size: 0.78rem; font-weight: 600; letter-spacing: 0.22em;

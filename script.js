@@ -219,6 +219,36 @@ function syncCollectionsFromFirestore(callback) {
   });
 }
 
+// ===== BANNER =====
+function getBannerData() {
+  var d = localStorage.getItem('gentifyBanner');
+  if (d) { try { return JSON.parse(d); } catch(e) {} }
+  return { desktop: '', mobile: '' };
+}
+
+function renderBanner() {
+  var hero = document.getElementById('hero');
+  var bannerImg = document.getElementById('bannerImg');
+  var bannerSource = document.getElementById('bannerSourceMobile');
+  var heroContent = document.getElementById('heroContent');
+  if (!bannerImg) return;
+  var data = getBannerData();
+  var hasDesktop = data.desktop && data.desktop.length > 0;
+  var hasMobile = data.mobile && data.mobile.length > 0;
+  if (hasDesktop) {
+    bannerImg.src = data.desktop;
+    if (bannerSource && hasMobile) {
+      bannerSource.srcset = data.mobile;
+    }
+    if (hero) hero.classList.add('banner-has-image');
+  } else if (hasMobile) {
+    bannerImg.src = data.mobile;
+    if (hero) hero.classList.add('banner-has-image');
+  } else {
+    if (hero) hero.classList.remove('banner-has-image');
+  }
+}
+
 // Initialize: render from cache instantly, then sync Firestore in background
 (function initApp() {
   var cached = getProducts();
@@ -231,6 +261,7 @@ function syncCollectionsFromFirestore(callback) {
     products = cached;
     allProducts = getAllProductsFlat();
   }
+  renderBanner();
   renderAllProductGrids();
   renderCollections();
   syncFromFirestore(function() {
@@ -238,6 +269,9 @@ function syncCollectionsFromFirestore(callback) {
   });
   syncCollectionsFromFirestore(function() {
     renderCollections();
+  });
+  syncBannerFromFirestore(function() {
+    renderBanner();
   });
   syncUsersFromFirestore();
 })();
