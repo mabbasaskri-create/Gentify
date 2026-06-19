@@ -1066,6 +1066,15 @@ footer {
 }
 .add-product-btn:hover { background: var(--gold); }
 
+.sync-btn {
+  background: #2563eb; color: var(--white); border: none; border-radius: 10px;
+  padding: 10px 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: background 0.2s;
+  white-space: nowrap;
+}
+.sync-btn:hover { background: #1d4ed8; }
+.sync-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .edit-btn, .delete-btn {
   border: none; border-radius: 6px; padding: 6px 14px;
   font-size: 0.82rem; font-weight: 600; cursor: pointer;

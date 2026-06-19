@@ -118,21 +118,6 @@ function saveProducts(prods) {
   }
   products = prods;
   allProducts = getAllProductsFlat();
-  if (typeof window.syncProductsToFirestore === 'function') {
-    window.syncProductsToFirestore(prods).then(function() {
-      localStorage.setItem('gentifyProductsTS', String(Date.now()));
-    }).catch(function(e) {
-      console.error('Firestore sync first attempt failed:', e);
-      setTimeout(function() {
-        window.syncProductsToFirestore(prods).then(function() {
-          localStorage.setItem('gentifyProductsTS', String(Date.now()));
-        }).catch(function(e2) {
-          console.error('Firestore sync retry also failed:', e2);
-          showToast('Cloud sync error: ' + (e2.code || e2.message || 'unknown'));
-        });
-      }, 2000);
-    });
-  }
 }
 
 function getAllProductsFlat() {
@@ -203,10 +188,13 @@ function syncToFirestore(prods) {
 function syncFromFirestore(callback) {
   loadProdFromFirestore().then(function(result) {
     if (result && result.data && Object.keys(result.data).length > 0) {
-      localStorage.setItem('gentifyProductsTS', String(result.updated));
-      localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-      products = result.data;
-      allProducts = getAllProductsFlat();
+      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
+      if (result.updated > localTS) {
+        localStorage.setItem('gentifyProductsTS', String(result.updated));
+        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+        products = result.data;
+        allProducts = getAllProductsFlat();
+      }
     }
     if (callback) callback();
   }).catch(function() {
@@ -234,6 +222,7 @@ function syncCollectionsFromFirestore(callback) {
   var cached = getProducts();
   if (Object.keys(cached).length === 0) {
     localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
+    localStorage.setItem('gentifyProductsTS', String(Date.now()));
     products = DEFAULT_PRODUCTS;
     allProducts = getAllProductsFlat();
   } else {

@@ -82,9 +82,11 @@
 
     <div class="admin-section">
       <h3>Products</h3>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px">
         <button class="add-product-btn" onclick="showAddProductForm()">+ Add Product</button>
+        <button class="sync-btn" onclick="syncToFirebase()" id="syncBtn">&#x2601; Sync to Firebase</button>
       </div>
+      <div id="syncStatus" style="text-align:right;font-size:0.82rem;margin-bottom:8px;min-height:20px"></div>
       <div class="admin-table-wrap">
         <table class="admin-table" id="productsTable">
           <thead>
@@ -275,10 +277,13 @@ function loadAdminData() {
     var firestoreUsers = results[1];
 
     if (prodResult && prodResult.data && Object.keys(prodResult.data).length > 0) {
-      localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
-      localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
-      products = prodResult.data;
-      allProducts = getAllProductsFlat();
+      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
+      if (prodResult.updated > localTS) {
+        localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
+        localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+        products = prodResult.data;
+        allProducts = getAllProductsFlat();
+      }
     } else {
       var stored = localStorage.getItem('gentifyProducts');
       if (stored) {
@@ -477,6 +482,42 @@ function reloadAdminData() {
   allProducts = getAllProductsFlat();
   loadProductsTable();
   loadAdminStats();
+  showSyncStatus('', '');
+}
+
+function showSyncStatus(msg, color) {
+  var el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color || '#666'; }
+}
+
+function syncToFirebase() {
+  var btn = document.getElementById('syncBtn');
+  if (btn) btn.disabled = true;
+  showSyncStatus('\u23F3 Syncing to Firebase...', '#666');
+
+  if (typeof window.syncProductsToFirestore !== 'function') {
+    showSyncStatus('\u2717 Firebase not available', '#dc2626');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  var prods = getProducts();
+  if (Object.keys(prods).length === 0) {
+    showSyncStatus('\u2717 No products to sync', '#dc2626');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  window.syncProductsToFirestore(prods).then(function() {
+    localStorage.setItem('gentifyProductsTS', String(Date.now()));
+    showSyncStatus('\u2713 Synced to Firebase successfully!', '#27ae60');
+    if (btn) btn.disabled = false;
+    setTimeout(function() { showSyncStatus('', ''); }, 4000);
+  }).catch(function(e) {
+    console.error('Sync to Firebase failed:', e);
+    showSyncStatus('\u2717 Sync failed: ' + (e.code || e.message || 'unknown error'), '#dc2626');
+    if (btn) btn.disabled = false;
+  });
 }
 
 function saveProductForm() {
