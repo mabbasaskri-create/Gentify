@@ -226,6 +226,11 @@ function getBannerData() {
   return { desktop: '', mobile: '' };
 }
 
+function scrollToShop() {
+  var el = document.getElementById('collectionsGrid');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
 function renderBanner() {
   var hero = document.getElementById('hero');
   var bannerImg = document.getElementById('bannerImg');
@@ -260,6 +265,8 @@ function renderBanner() {
       bannerSource.style.display = '';
     }
   }
+  bannerImg.style.cursor = (hasDesktop || hasMobile) ? 'pointer' : '';
+  bannerImg.onclick = (hasDesktop || hasMobile) ? scrollToShop : null;
 }
 
 // Initialize: render from cache instantly, then sync Firestore in background

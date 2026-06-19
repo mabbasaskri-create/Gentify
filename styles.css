@@ -134,6 +134,11 @@ nav {
   image-rendering: auto;
   -ms-interpolation-mode: bicubic;
   animation: bannerFadeIn 0.6s ease;
+  transition: opacity 0.2s;
+}
+
+.banner-image[style*="cursor: pointer"]:hover {
+  opacity: 0.95;
 }
 
 @keyframes bannerFadeIn {
