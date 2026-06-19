@@ -1014,6 +1014,33 @@ function removeBanner(type) {
   showToast(type.charAt(0).toUpperCase() + type.slice(1) + ' banner removed.');
 }
 
+function uploadBannerImage(file, type) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var w = img.width, h = img.height;
+      var maxDim = type === 'desktop' ? 1920 : 1200;
+      if (w > maxDim) { h *= maxDim / w; w = maxDim; }
+      if (h > maxDim) { w *= maxDim / h; h = maxDim; }
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      var base64 = canvas.toDataURL('image/jpeg', 0.95);
+      var data = getBannerData();
+      data[type] = base64;
+      saveBannerData(data);
+      renderBannerPreview(type);
+      showToast((type.charAt(0).toUpperCase() + type.slice(1)) + ' banner uploaded!');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('apImages').addEventListener('change', function() {
     addFilesToPending(this.files);
@@ -1029,29 +1056,13 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('bannerDesktopInput').addEventListener('change', function() {
     if (this.files && this.files[0]) {
-      filesToBase64([this.files[0]]).then(function(images) {
-        if (images[0]) {
-          var data = getBannerData();
-          data.desktop = images[0];
-          saveBannerData(data);
-          renderBannerPreview('desktop');
-          showToast('Desktop banner uploaded!');
-        }
-      });
+      uploadBannerImage(this.files[0], 'desktop');
     }
     this.value = '';
   });
   document.getElementById('bannerMobileInput').addEventListener('change', function() {
     if (this.files && this.files[0]) {
-      filesToBase64([this.files[0]]).then(function(images) {
-        if (images[0]) {
-          var data = getBannerData();
-          data.mobile = images[0];
-          saveBannerData(data);
-          renderBannerPreview('mobile');
-          showToast('Mobile banner uploaded!');
-        }
-      });
+      uploadBannerImage(this.files[0], 'mobile');
     }
     this.value = '';
   });
