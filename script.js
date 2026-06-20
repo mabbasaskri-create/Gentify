@@ -123,11 +123,29 @@ function saveProducts(prods) {
     localStorage.setItem('gentifyProducts', JSON.stringify(prods));
     localStorage.setItem('gentifyProductsTS', String(Date.now()));
   } catch (e) {
-    showToast('Storage full! Try using smaller images or removing unused products.');
-    return;
+    var slim = JSON.parse(JSON.stringify(prods));
+    Object.keys(slim).forEach(function(cat) {
+      slim[cat].forEach(function(p) {
+        if (p.images && p.images.length > 1) p.images = [p.images[0]];
+      });
+    });
+    try {
+      localStorage.setItem('gentifyProducts', JSON.stringify(slim));
+      localStorage.setItem('gentifyProductsTS', String(Date.now()));
+    } catch (e2) {
+      var thinner = JSON.parse(JSON.stringify(slim));
+      Object.keys(thinner).forEach(function(cat) {
+        thinner[cat].forEach(function(p) { p.images = []; });
+      });
+      try {
+        localStorage.setItem('gentifyProducts', JSON.stringify(thinner));
+        localStorage.setItem('gentifyProductsTS', String(Date.now()));
+      } catch (e3) {}
+    }
   }
   products = prods;
   allProducts = getAllProductsFlat();
+  syncToFirestore(prods);
 }
 
 function getAllProductsFlat() {
@@ -201,8 +219,26 @@ function syncFromFirestore(callback) {
     if (result && result.data && Object.keys(result.data).length > 0) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
       if (result.updated > localTS) {
-        try { localStorage.setItem('gentifyProductsTS', String(result.updated)); } catch (e) {}
-        try { localStorage.setItem('gentifyProducts', JSON.stringify(result.data)); } catch (e) {}
+        try {
+          localStorage.setItem('gentifyProductsTS', String(result.updated));
+          localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+        } catch (e) {
+          var slim = JSON.parse(JSON.stringify(result.data));
+          Object.keys(slim).forEach(function(cat) {
+            slim[cat].forEach(function(p) {
+              if (p.images && p.images.length > 1) p.images = [p.images[0]];
+            });
+          });
+          try {
+            localStorage.setItem('gentifyProducts', JSON.stringify(slim));
+          } catch (e2) {
+            var thinner = JSON.parse(JSON.stringify(slim));
+            Object.keys(thinner).forEach(function(cat) {
+              thinner[cat].forEach(function(p) { p.images = []; });
+            });
+            try { localStorage.setItem('gentifyProducts', JSON.stringify(thinner)); } catch (e3) {}
+          }
+        }
         products = result.data;
         allProducts = getAllProductsFlat();
       }

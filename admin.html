@@ -136,7 +136,7 @@
             <input type="text" id="apImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
             <button onclick="addUrlImage()" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
           </div>
-          <small style="color:var(--gray);font-size:0.82rem">Add up to 10 images via file upload or URL. Click &times; to remove an image.</small>
+          <small style="color:var(--gray);font-size:0.82rem">Add images via file upload or URL. Click &times; to remove an image.</small>
         </div>
         <div class="form-row2">
           <div class="form-group">
@@ -338,6 +338,13 @@
 <script src="script.js" defer></script>
 <script>
 function loadAdminData() {
+  loadAdminStats();
+  loadProductsTable();
+  loadUsersTable();
+  loadAllOrders();
+  loadCollectionsTable();
+  if (typeof loadBannerSettings === 'function') loadBannerSettings();
+
   Promise.all([
     loadProdFromFirestore(),
     typeof window.getFirestoreUsers === 'function' ? window.getFirestoreUsers() : Promise.resolve([])
@@ -348,19 +355,34 @@ function loadAdminData() {
     if (prodResult && prodResult.data && Object.keys(prodResult.data).length > 0) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
       if (prodResult.updated > localTS) {
-        localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
-        localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+        try {
+          localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
+          localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+        } catch (e) {
+          var slim = JSON.parse(JSON.stringify(prodResult.data));
+          Object.keys(slim).forEach(function(cat) {
+            slim[cat].forEach(function(p) {
+              if (p.images && p.images.length > 1) p.images = [p.images[0]];
+            });
+          });
+          try {
+            localStorage.setItem('gentifyProducts', JSON.stringify(slim));
+            localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+          } catch (e2) {
+            var thinner = JSON.parse(JSON.stringify(slim));
+            Object.keys(thinner).forEach(function(cat) {
+              thinner[cat].forEach(function(p) { p.images = []; });
+            });
+            try {
+              localStorage.setItem('gentifyProducts', JSON.stringify(thinner));
+              localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
+            } catch (e3) {}
+          }
+        }
         products = prodResult.data;
         allProducts = getAllProductsFlat();
-      }
-    } else {
-      var stored = localStorage.getItem('gentifyProducts');
-      if (stored) {
-        var parsed = JSON.parse(stored);
-        if (Object.keys(parsed).length > 0) {
-          products = parsed;
-          allProducts = getAllProductsFlat();
-        }
+        loadAdminStats();
+        loadProductsTable();
       }
     }
 
@@ -370,29 +392,17 @@ function loadAdminData() {
         if (!u.orders) u.orders = [];
       });
       localStorage.setItem('gentifyUsers', JSON.stringify(firestoreUsers));
+      loadAdminStats();
+      loadUsersTable();
+      loadAllOrders();
     }
 
-    loadAdminStats();
-    loadProductsTable();
-    loadUsersTable();
-    loadAllOrders();
-    loadCollectionsTable();
-    if (typeof loadBannerSettings === 'function') loadBannerSettings();
     if (typeof window.syncBannerFromFirestore === 'function') {
       window.syncBannerFromFirestore(function() {
         if (typeof loadBannerSettings === 'function') loadBannerSettings();
       });
     }
-  }).catch(function() {
-    products = getProducts();
-    allProducts = getAllProductsFlat();
-    loadAdminStats();
-    loadProductsTable();
-    loadUsersTable();
-    loadAllOrders();
-    loadCollectionsTable();
-    if (typeof loadBannerSettings === 'function') loadBannerSettings();
-  });
+  }).catch(function() {});
 }
 
 function loadAdminStats() {
@@ -488,20 +498,8 @@ function filesToBase64(files) {
   });
 }
 
-var MAX_IMAGES = 10;
-
 function addFilesToPending(files) {
-  var remaining = MAX_IMAGES - pendingImages.length;
-  if (remaining <= 0) {
-    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
-    return;
-  }
-  var take = Math.min(files.length, remaining);
-  var selected = Array.from(files).slice(0, take);
-  if (take < files.length) {
-    showToast('Only ' + take + ' of ' + files.length + ' files added (max ' + MAX_IMAGES + ').');
-  }
-  filesToBase64(selected).then(function(images) {
+  filesToBase64(Array.from(files)).then(function(images) {
     pendingImages = pendingImages.concat(images);
     renderPendingImages();
   });
@@ -516,10 +514,6 @@ function addUrlImage() {
   var input = document.getElementById('apImageUrl');
   var url = input.value.trim();
   if (!url) return;
-  if (pendingImages.length >= MAX_IMAGES) {
-    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
-    return;
-  }
   pendingImages.push(url);
   renderPendingImages();
   input.value = '';
@@ -616,11 +610,6 @@ function saveProductForm() {
 
   if (pendingImages.length === 0) {
     showToast('Please add at least one product image.');
-    return;
-  }
-
-  if (pendingImages.length > MAX_IMAGES) {
-    showToast('Maximum ' + MAX_IMAGES + ' images allowed.');
     return;
   }
 
@@ -752,8 +741,21 @@ function editProduct(id) {
   var p = flat.find(function(prod) { return prod.id === id; });
   if (!p) return;
   editingProductId = id;
-  editingProductImages = p.images;
-  pendingImages = p.images.slice();
+  editingProductImages = p.images || [];
+  pendingImages = (p.images || []).slice();
+  if (typeof loadProdFromFirestore === 'function') {
+    loadProdFromFirestore().then(function(result) {
+      if (result && result.data) {
+        var all = [];
+        Object.keys(result.data).forEach(function(k) { all = all.concat(result.data[k]); });
+        var fp = all.find(function(prod) { return prod.id === id; });
+        if (fp && fp.images && fp.images.length > pendingImages.length) {
+          pendingImages = fp.images.slice();
+          renderPendingImages();
+        }
+      }
+    }).catch(function() {});
+  }
   document.getElementById('addProductTitle').textContent = 'Edit Product';
   document.getElementById('apName').value = p.name;
   document.getElementById('apCategory').value = p.categoryKey || (p.category ? p.category.toLowerCase() : 'caps');
@@ -1103,6 +1105,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     this.value = '';
   });
+
+  var cachedUser = getCurrentUser();
+  var isCachedAdmin = cachedUser && cachedUser.email === 'm.abbas.askri@gmail.com';
+  if (isCachedAdmin) {
+    document.getElementById('adminContent').style.display = 'block';
+    document.getElementById('adminLoginPrompt').style.display = 'none';
+    loadAdminData();
+    if (typeof loadBannerSettings === 'function') loadBannerSettings();
+  } else {
+    document.getElementById('adminContent').style.display = 'none';
+    document.getElementById('adminLoginPrompt').style.display = 'block';
+  }
+
   window.onAuthStateChanged(function() {
     var user = getCurrentUser();
     var isAdmin = user && user.email === 'm.abbas.askri@gmail.com';
