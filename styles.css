@@ -674,6 +674,17 @@ footer {
 .detail-add-btn:hover { background: var(--gold); transform: translateY(-1px); }
 .detail-add-btn:active { transform: scale(0.97); }
 
+.detail-buy-btn {
+  flex: 1; height: 46px;
+  background: var(--gold); color: var(--black);
+  border: none; border-radius: 30px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.detail-buy-btn:hover { background: #d4a54a; transform: translateY(-1px); }
+.detail-buy-btn:active { transform: scale(0.97); }
+
 /* ===== PRODUCT DETAIL PAGE ===== */
 .product-detail-page {
   padding: 40px 5%; min-height: calc(100vh - 70px);
@@ -808,6 +819,17 @@ footer {
 }
 .pd-add-btn:hover { background: var(--gold); transform: translateY(-1px); }
 .pd-add-btn:active { transform: scale(0.97); }
+
+.pd-buy-btn {
+  flex: 1; height: 50px;
+  background: var(--gold); color: var(--black);
+  border: none; border-radius: 30px;
+  font-size: 1rem; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.pd-buy-btn:hover { background: #d4a54a; transform: translateY(-1px); }
+.pd-buy-btn:active { transform: scale(0.97); }
 
 .pd-meta {
   display: flex; flex-direction: column; gap: 12px;

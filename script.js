@@ -487,6 +487,13 @@ function detailAddToCart() {
   closeProductDetail();
 }
 
+function detailBuyNow() {
+  if (!detailProduct) return;
+  addToCart(detailProduct, detailSelectedSize, detailSelectedColor, detailQty);
+  closeProductDetail();
+  window.location.href = 'checkout.html';
+}
+
 // ===== PRODUCT DETAIL PAGE (standalone) =====
 let pdProduct = null;
 let pdSelectedSize = null;
@@ -620,6 +627,12 @@ function pdAddToCart() {
   if (!pdProduct) return;
   addToCart(pdProduct, pdSelectedSize, pdSelectedColor, pdQty);
   showToast('"' + pdProduct.name + '" added to cart');
+}
+
+function pdBuyNow() {
+  if (!pdProduct) return;
+  addToCart(pdProduct, pdSelectedSize, pdSelectedColor, pdQty);
+  window.location.href = 'checkout.html';
 }
 
 // ===== CART LOGIC =====
