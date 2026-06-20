@@ -13,7 +13,8 @@
     "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
     "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
     "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"
   }
 }
 </script>
@@ -130,13 +131,8 @@
           <div id="apImagePreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
           <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
             <label class="file-upload-btn" style="cursor:pointer;background:var(--black);color:var(--white);padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:500;white-space:nowrap">Choose Images<input type="file" id="apImages" accept="image/*" multiple style="display:none" /></label>
-            <button type="button" class="url-btn" onclick="toggleUrlInput()" style="background:var(--cream);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:500;white-space:nowrap">+ Add URL</button>
           </div>
-          <div id="apUrlRow" style="display:none;margin-top:6px;gap:6px;align-items:center">
-            <input type="text" id="apImageUrl" placeholder="https://example.com/image.jpg" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif" />
-            <button onclick="addUrlImage()" style="background:var(--black);color:var(--white);border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">Add</button>
-          </div>
-          <small style="color:var(--gray);font-size:0.82rem">Add images via file upload or URL. Click &times; to remove an image.</small>
+          <small style="color:var(--gray);font-size:0.82rem">Upload images from your device. Click &times; to remove an image.</small>
         </div>
         <div class="form-row2">
           <div class="form-group">
