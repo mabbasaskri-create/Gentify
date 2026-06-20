@@ -50,7 +50,8 @@ nav {
 .nav-links { display: flex; gap: 2.5rem; list-style: none; }
 .nav-links a {
   text-decoration: none; color: var(--gray);
-  font-size: 0.95rem; font-weight: 500;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem; font-weight: 500;
   transition: color 0.2s;
 }
 .nav-links a:hover { color: var(--black); }
