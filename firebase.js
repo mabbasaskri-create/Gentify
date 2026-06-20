@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
+
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
   authDomain: "gentify-bbd67.firebaseapp.com",
@@ -18,51 +19,47 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
-window.getFirebaseToken = function() {
-  if (auth.currentUser) {
-    return auth.currentUser.getIdToken();
-  }
-  return Promise.reject(new Error('Not signed in'));
-};
-
 window.uploadProductImage = function(file) {
-  return window.getFirebaseToken().then(function(token) {
-    return new Promise(function(resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var base64 = e.target.result.split(',')[1];
-        fetch('/api/upload', {
+  var timestamp = Date.now();
+  var random = Math.random().toString(36).slice(2, 8);
+  var ext = file.name.split('.').pop();
+  var filename = timestamp + '_' + random + '.' + ext;
+
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = async function() {
+      try {
+        var base64 = reader.result.split(',')[1];
+        if (!auth.currentUser) { reject(new Error('Not authenticated')); return; }
+        var token = await auth.currentUser.getIdToken();
+        var resp = await fetch('/api/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ file: base64, name: file.name, contentType: file.type || 'image/jpeg' })
-        }).then(function(r) {
-          if (!r.ok) { return r.text().then(function(t) { throw new Error(t); }); }
-          return r.json();
-        }).then(function(d) { resolve(d.url); }).catch(reject);
-      };
-      reader.onerror = function() { reject(new Error('Failed to read file')); };
-      reader.readAsDataURL(file);
-    });
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: base64, filename: filename, contentType: file.type, token: token })
+        });
+        var data = await resp.json();
+        if (data.url) resolve(data.url);
+        else reject(new Error(data.error || 'Upload failed'));
+      } catch (e) { reject(e); }
+    };
+    reader.onerror = function() { reject(new Error('File read failed')); };
+    reader.readAsDataURL(file);
   });
 };
 
-window.deleteStorageImage = function(url) {
-  return window.getFirebaseToken().then(function(token) {
-    return fetch('/api/upload', {
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ url: url })
-    }).then(function(r) {
-      if (!r.ok) { return r.text().then(function(t) { throw new Error(t); }); }
-      return r.json();
-    }).catch(function() {});
-  }).catch(function() {});
+window.deleteStorageImage = async function(url) {
+  try {
+    if (!auth.currentUser) return;
+    var token = await auth.currentUser.getIdToken();
+    var match = url.match(/\/o\/(.+?)(\?|$)/);
+    if (!match) return;
+    var path = decodeURIComponent(match[1]);
+    await fetch('/api/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: path, token: token })
+    });
+  } catch (e) {}
 };
 
 var PRODUCTS_COL = collection(db, "products");
