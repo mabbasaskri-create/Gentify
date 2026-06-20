@@ -276,14 +276,16 @@ function normalizePhone(phone) {
 }
 
 function renderCheckout() {
+  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
   var buyNowData = sessionStorage.getItem('gentifyBuyNow');
   if (buyNowData) {
     try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
   }
   var user = getCurrentUser();
 
-  if (!user && !buyNowData) {
-    window.location.href = 'login.html?redirect=checkout.html';
+  if (!user && !buyNowData && cart.length === 0) {
+    document.getElementById('checkoutContent').style.display = 'none';
+    document.getElementById('checkoutEmpty').style.display = 'block';
     return;
   }
 
@@ -332,6 +334,7 @@ function renderCheckout() {
 }
 
 function updateCheckoutSummary() {
+  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
   var buyNowData = sessionStorage.getItem('gentifyBuyNow');
   if (buyNowData) {
     try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
@@ -455,6 +458,7 @@ function placeOrder() {
   }
 
   var user = getCurrentUser();
+  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
   var buyNowData = sessionStorage.getItem('gentifyBuyNow');
   if (buyNowData) {
     try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }

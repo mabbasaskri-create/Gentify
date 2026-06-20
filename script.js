@@ -26,16 +26,22 @@ window.onAuthStateChanged(function(firebaseUser) {
           else cache.push(existing);
           try { localStorage.setItem('gentifyUsers', JSON.stringify(cache)); } catch (e) {}
 
-          if (existing.cart && existing.cart.length > 0) {
+          if (existing.cart) {
             existing.cart.forEach(function(fsItem) {
               if (!cart.find(function(c) { return c.cartKey === fsItem.cartKey; })) {
                 cart.push(fsItem);
               }
             });
             saveCart();
+            updateCartUI();
+            if (typeof renderCheckout === 'function') renderCheckout();
           }
         } else {
-          window.setFirestoreUser(firebaseUser.email, userData).catch(function() {});
+          window.setFirestoreUser(firebaseUser.email, userData).then(function() {
+            saveCart();
+            updateCartUI();
+            if (typeof renderCheckout === 'function') renderCheckout();
+          }).catch(function() {});
           var cache = getUsers();
           if (!cache.find(function(u) { return u.email === firebaseUser.email; })) {
             cache.push(userData);
@@ -666,20 +672,18 @@ function addToCart(product, size, color, qty) {
 }
 
 function saveCart() {
-  try {
-    localStorage.setItem('gentifyCart', JSON.stringify(cart));
-  } catch (e) {
-    showToast('Cart storage is full. Try removing some items or clearing your cart.');
-    return;
-  }
   var user = getCurrentUser();
-  if (user && typeof window.getFirestoreUser === 'function') {
+  if (user && typeof window.setFirestoreUser === 'function') {
     window.getFirestoreUser(user.email).then(function(data) {
       if (data) {
         data.cart = cart;
         window.setFirestoreUser(user.email, data).catch(function() {});
       }
     }).catch(function() {});
+  } else {
+    try {
+      localStorage.setItem('gentifyCart', JSON.stringify(cart));
+    } catch (e) {}
   }
 }
 
@@ -760,6 +764,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function checkout() {
   closeCart();
+  sessionStorage.removeItem('gentifyBuyNow');
+  try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
   if (!isLoggedIn()) {
     window.location.href = 'login.html?redirect=checkout.html';
     return;
@@ -769,6 +775,8 @@ function checkout() {
 
 function checkoutCart() {
   if (cart.length === 0) { showToast('Your cart is empty.'); return; }
+  sessionStorage.removeItem('gentifyBuyNow');
+  try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
   if (!isLoggedIn()) { window.location.href = 'login.html?redirect=checkout.html'; return; }
   window.location.href = 'checkout.html';
 }
