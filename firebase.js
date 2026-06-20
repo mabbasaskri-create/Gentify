@@ -25,7 +25,8 @@ window.uploadProductImage = function(file) {
       var dataUrl = e.target.result;
       var img = new Image();
       img.onload = function() {
-        var MAX = 800;
+        var MAX = 1000;
+        var Q = 0.7;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -36,7 +37,7 @@ window.uploadProductImage = function(file) {
         canvas.height = h;
         var ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        resolve(canvas.toDataURL('image/jpeg', Q));
       };
       img.onerror = function() { resolve(dataUrl); };
       img.src = dataUrl;
@@ -78,26 +79,52 @@ window.syncProductsToFirestore = function(prods) {
     var newIds = {};
     allProducts.forEach(function(p) { newIds[p.id] = true; });
 
-    var promises = [];
+    return getDocs(collection(db, "productImages")).then(function(imgSnap) {
+      var imgByProduct = {};
+      imgSnap.forEach(function(d) {
+        var img = d.data();
+        if (!imgByProduct[img.productId]) imgByProduct[img.productId] = [];
+        imgByProduct[img.productId].push({ id: d.id, index: img.index });
+      });
 
-    Object.keys(existingIds).forEach(function(id) {
-      if (!newIds[id]) {
-        promises.push(deleteDoc(doc(db, "products", id)));
-      }
+      var promises = [];
+
+      Object.keys(existingIds).forEach(function(id) {
+        if (!newIds[id]) {
+          promises.push(deleteDoc(doc(db, "products", id)));
+          (imgByProduct[id] || []).forEach(function(img) {
+            promises.push(deleteDoc(doc(db, "productImages", img.id)));
+          });
+        }
+      });
+
+      allProducts.forEach(function(p) {
+        var data = Object.assign({}, p);
+        delete data._categoryKey;
+        data.categoryKey = (p.categoryKey || p.category || 'caps').toLowerCase();
+        data._updated = syncTime;
+        var images = data.images || [];
+        delete data.images;
+
+        promises.push(setDoc(doc(db, "products", p.id), data));
+
+        (imgByProduct[p.id] || []).forEach(function(img) {
+          promises.push(deleteDoc(doc(db, "productImages", img.id)));
+        });
+
+        images.forEach(function(dataUrl, idx) {
+          promises.push(setDoc(doc(collection(db, "productImages")), {
+            productId: p.id,
+            index: idx,
+            dataUrl: dataUrl
+          }));
+        });
+      });
+
+      promises.push(deleteDoc(doc(db, "catalog", "products")).catch(function() {}));
+
+      return Promise.all(promises);
     });
-
-    allProducts.forEach(function(p) {
-      var data = Object.assign({}, p);
-      delete data._categoryKey;
-      data.categoryKey = (p.categoryKey || p.category || 'caps').toLowerCase();
-      data._updated = syncTime;
-      promises.push(setDoc(doc(db, "products", p.id), data));
-    });
-
-    // Clean up old single-document format if it exists
-    promises.push(deleteDoc(doc(db, "catalog", "products")).catch(function() {}));
-
-    return Promise.all(promises);
   });
 };
 
@@ -117,12 +144,27 @@ window.loadCollectionsFromFirestore = function() {
 };
 
 window.loadProductsFromFirestore = function() {
-  return getDocs(PRODUCTS_COL).then(function(snapshot) {
+  return Promise.all([
+    getDocs(PRODUCTS_COL),
+    getDocs(collection(db, "productImages"))
+  ]).then(function(results) {
+    var productSnap = results[0];
+    var imageSnap = results[1];
+
+    var imagesByProduct = {};
+    imageSnap.forEach(function(d) {
+      var img = d.data();
+      if (!imagesByProduct[img.productId]) imagesByProduct[img.productId] = [];
+      imagesByProduct[img.productId][img.index] = img.dataUrl;
+    });
+
     var allProducts = [];
     var maxUpdated = 0;
-    snapshot.forEach(function(d) {
+    productSnap.forEach(function(d) {
       var p = d.data();
       p.id = d.id;
+      var sepImages = imagesByProduct[p.id] || [];
+      p.images = sepImages.length > 0 || !p.images ? sepImages : p.images;
       if (p._updated && p._updated > maxUpdated) maxUpdated = p._updated;
       allProducts.push(p);
     });
