@@ -336,7 +336,7 @@ function renderProducts(list, containerId) {
       container.innerHTML = list.map(p => `
     <div class="product-card" onclick="openProductDetail('${p.id}')">
       <div class="product-img-wrap">
-        <img src="${p.images[0]}" alt="${p.name}" loading="lazy" />
+        <img src="${(p.images && p.images[0]) || ''}" alt="${p.name}" loading="lazy" />
         ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
       </div>
       <div class="product-info">
@@ -423,11 +423,11 @@ function closeProductDetail(e) {
 function updateDetailGallery() {
   if (!detailProduct) return;
   const mainImg = document.getElementById('detailMainImg');
-  mainImg.src = detailProduct.images[detailCurrentImage];
+  mainImg.src = (detailProduct.images && detailProduct.images[detailCurrentImage]) || '';
   mainImg.alt = detailProduct.name;
 
   const thumbs = document.getElementById('detailThumbnails');
-  thumbs.innerHTML = detailProduct.images.map((img, i) => `
+  thumbs.innerHTML = (detailProduct.images || []).map((img, i) => `
     <div class="detail-thumb ${i === detailCurrentImage ? 'active' : ''}" onclick="switchDetailImage(${i})">
       <img src="${img}" alt="${detailProduct.name} view ${i + 1}" />
     </div>
@@ -557,11 +557,11 @@ function renderProductDetailPage(id) {
 function updatePdGallery() {
   if (!pdProduct) return;
   var mainImg = document.getElementById('pdMainImg');
-  mainImg.src = pdProduct.images[pdCurrentImage];
+  mainImg.src = (pdProduct.images && pdProduct.images[pdCurrentImage]) || '';
   mainImg.alt = pdProduct.name;
 
   var thumbs = document.getElementById('pdThumbnails');
-  thumbs.innerHTML = pdProduct.images.map(function(img, i) {
+  thumbs.innerHTML = (pdProduct.images || []).map(function(img, i) {
     return '<div class="pd-thumb' + (i === pdCurrentImage ? ' active' : '') + '" onclick="switchPdImage(' + i + ')">' +
       '<img src="' + img + '" alt="' + pdProduct.name + ' view ' + (i + 1) + '" />' +
       '</div>';
@@ -666,7 +666,7 @@ function addToCart(product, size, color, qty) {
   if (existing) {
     existing.qty += qty;
   } else {
-    cart.push({ id: product.id, cartKey, selectedSize: size, selectedColor: color, qty, name: product.name, price: product.price, images: product.images ? [product.images[0]] : [] });
+    cart.push({ id: product.id, cartKey, selectedSize: size, selectedColor: color, qty, name: product.name, price: product.price, images: product.images && product.images[0] ? [product.images[0]] : [] });
   }
   saveCart();
   updateCartUI();
@@ -711,7 +711,7 @@ function updateCartUI() {
       const full = allProducts.find(p => p.id === item.id);
       return `
       <div class="cart-item">
-        <img src="${full ? full.images[0] : ''}" alt="${item.name}" />
+        <img src="${full && full.images && full.images[0] ? full.images[0] : ''}" alt="${item.name}" />
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           <div class="cart-item-options">${[item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ')}</div>
@@ -955,7 +955,7 @@ function generateMockOrders(name, email) {
       var qty = Math.floor(Math.random() * 2) + 1;
       var color = p.colors ? p.colors[0].name : null;
       var size = p.sizes ? p.sizes[0] : null;
-      items.push({ id: p.id, name: p.name, img: p.images[0], qty: qty, price: p.price, color: color, size: size });
+      items.push({ id: p.id, name: p.name, img: (p.images && p.images[0]) || '', qty: qty, price: p.price, color: color, size: size });
       subtotal += p.price * qty;
     }
     var status = statuses[Math.min(i - 1, statuses.length - 1)];

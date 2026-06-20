@@ -472,7 +472,7 @@ function placeOrder() {
     return {
       id: item.id,
       name: item.name,
-      img: item.images ? item.images[0] : '',
+      img: item.images && item.images[0] ? item.images[0] : '',
       qty: item.qty,
       price: item.price,
       color: item.selectedColor,

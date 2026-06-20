@@ -153,7 +153,7 @@ function renderOrders() {
         <div class="order-card-body">
           ${o.items.map(item => `
             <div class="order-card-item">
-              <img src="${item.img}" alt="${item.name}" />
+              <img src="${item.img || ''}" alt="${item.name}" />
               <div>
                 <div class="item-name">${item.name}</div>
                 <div class="item-qty">Qty: ${item.qty} &middot; ${formatPrice(item.price)}</div>

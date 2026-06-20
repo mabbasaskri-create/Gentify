@@ -169,7 +169,7 @@ window.loadProductsFromFirestore = function() {
       var p = d.data();
       p.id = d.id;
       var sepImages = imagesByProduct[p.id] || [];
-      p.images = sepImages.length > 0 || !p.images ? sepImages : p.images;
+      p.images = (sepImages.length > 0 || !p.images) ? sepImages : (p.images || []);
       if (p._updated && p._updated > maxUpdated) maxUpdated = p._updated;
       allProducts.push(p);
     });
