@@ -2,7 +2,6 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
@@ -19,26 +18,51 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
-const storage = getStorage(app);
+window.getFirebaseToken = function() {
+  if (auth.currentUser) {
+    return auth.currentUser.getIdToken();
+  }
+  return Promise.reject(new Error('Not signed in'));
+};
 
 window.uploadProductImage = function(file) {
-  var timestamp = Date.now();
-  var random = Math.random().toString(36).slice(2, 8);
-  var ext = file.name.split('.').pop();
-  var filename = timestamp + '_' + random + '.' + ext;
-  var storageRef = ref(storage, 'product_images/' + filename);
-  return uploadBytes(storageRef, file).then(function() {
-    return getDownloadURL(storageRef);
+  return window.getFirebaseToken().then(function(token) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+        fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ file: base64, name: file.name, contentType: file.type || 'image/jpeg' })
+        }).then(function(r) {
+          if (!r.ok) { return r.text().then(function(t) { throw new Error(t); }); }
+          return r.json();
+        }).then(function(d) { resolve(d.url); }).catch(reject);
+      };
+      reader.onerror = function() { reject(new Error('Failed to read file')); };
+      reader.readAsDataURL(file);
+    });
   });
 };
 
 window.deleteStorageImage = function(url) {
-  try {
-    var storageRef = ref(storage, url);
-    return deleteObject(storageRef).catch(function() {});
-  } catch (e) {
-    return Promise.resolve();
-  }
+  return window.getFirebaseToken().then(function(token) {
+    return fetch('/api/upload', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: url })
+    }).then(function(r) {
+      if (!r.ok) { return r.text().then(function(t) { throw new Error(t); }); }
+      return r.json();
+    }).catch(function() {});
+  }).catch(function() {});
 };
 
 var PRODUCTS_COL = collection(db, "products");
