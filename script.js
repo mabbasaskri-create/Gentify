@@ -26,7 +26,7 @@ window.onAuthStateChanged(function(firebaseUser) {
           else cache.push(existing);
           try { localStorage.setItem('gentifyUsers', JSON.stringify(cache)); } catch (e) {}
 
-          if (existing.cart) {
+          if (existing.cart && !sessionStorage.getItem('gentifyCheckoutItems')) {
             existing.cart.forEach(function(fsItem) {
               if (!cart.find(function(c) { return c.cartKey === fsItem.cartKey; })) {
                 cart.push(fsItem);
@@ -501,10 +501,10 @@ function detailBuyNow() {
   if (!detailProduct) return;
   var p = detailProduct, s = detailSelectedSize, c = detailSelectedColor, q = detailQty;
   closeProductDetail();
-  sessionStorage.setItem('gentifyBuyNow', JSON.stringify({
+  sessionStorage.setItem('gentifyCheckoutItems', JSON.stringify([{
     id: p.id, name: p.name, price: p.price, images: p.images,
     selectedSize: s, selectedColor: c, qty: q
-  }));
+  }]));
   window.location.href = 'checkout.html';
 }
 
@@ -645,7 +645,7 @@ function pdAddToCart() {
 
 function pdBuyNow() {
   if (!pdProduct) return;
-  sessionStorage.setItem('gentifyBuyNow', JSON.stringify({
+  sessionStorage.setItem('gentifyCheckoutItems', JSON.stringify([{
     id: pdProduct.id,
     name: pdProduct.name,
     price: pdProduct.price,
@@ -653,7 +653,7 @@ function pdBuyNow() {
     selectedSize: pdSelectedSize,
     selectedColor: pdSelectedColor,
     qty: pdQty
-  }));
+  }]));
   window.location.href = 'checkout.html';
 }
 
@@ -764,7 +764,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function checkout() {
   closeCart();
-  sessionStorage.removeItem('gentifyBuyNow');
+  if (cart.length > 0) {
+    sessionStorage.setItem('gentifyCheckoutItems', JSON.stringify(cart));
+    cart = [];
+    saveCart();
+    updateCartUI();
+  }
   try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
   if (!isLoggedIn()) {
     window.location.href = 'login.html?redirect=checkout.html';
@@ -775,7 +780,10 @@ function checkout() {
 
 function checkoutCart() {
   if (cart.length === 0) { showToast('Your cart is empty.'); return; }
-  sessionStorage.removeItem('gentifyBuyNow');
+  sessionStorage.setItem('gentifyCheckoutItems', JSON.stringify(cart));
+  cart = [];
+  saveCart();
+  updateCartUI();
   try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
   if (!isLoggedIn()) { window.location.href = 'login.html?redirect=checkout.html'; return; }
   window.location.href = 'checkout.html';

@@ -276,32 +276,27 @@ function normalizePhone(phone) {
 }
 
 function renderCheckout() {
-  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
-  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
-  if (buyNowData) {
-    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  var checkoutData = sessionStorage.getItem('gentifyCheckoutItems');
+  var checkoutItems = [];
+  if (checkoutData) {
+    try { checkoutItems = JSON.parse(checkoutData); } catch(e) { checkoutItems = []; }
   }
-  var user = getCurrentUser();
 
-  if (!user && !buyNowData && cart.length === 0) {
+  if (checkoutItems.length === 0) {
     document.getElementById('checkoutContent').style.display = 'none';
     document.getElementById('checkoutEmpty').style.display = 'block';
     return;
   }
 
-  if (!user && buyNowData) {
+  document.getElementById('checkoutContent').style.display = 'block';
+  document.getElementById('checkoutEmpty').style.display = 'none';
+
+  var user = getCurrentUser();
+  if (!user) {
     document.getElementById('loginNotice').style.display = 'block';
   } else {
     document.getElementById('loginNotice').style.display = 'none';
   }
-
-  if (!buyNowData && cart.length === 0) {
-    document.getElementById('checkoutContent').style.display = 'none';
-    document.getElementById('checkoutEmpty').style.display = 'block';
-    return;
-  }
-  document.getElementById('checkoutContent').style.display = 'block';
-  document.getElementById('checkoutEmpty').style.display = 'none';
 
   if (user && user.email) {
     var users = getUsers();
@@ -316,7 +311,6 @@ function renderCheckout() {
   }
 
   var itemsContainer = document.getElementById('checkoutItems');
-  var checkoutItems = buyNowData ? [buyNowData] : cart;
   itemsContainer.innerHTML = checkoutItems.map(function(item) {
     var img = item.images && item.images[0] ? item.images[0] : '';
     return '<div class="checkout-item">' +
@@ -334,13 +328,12 @@ function renderCheckout() {
 }
 
 function updateCheckoutSummary() {
-  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
-  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
-  if (buyNowData) {
-    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  var checkoutData = sessionStorage.getItem('gentifyCheckoutItems');
+  var checkoutItems = [];
+  if (checkoutData) {
+    try { checkoutItems = JSON.parse(checkoutData); } catch(e) { checkoutItems = []; }
   }
-  var items = buyNowData ? [buyNowData] : cart;
-  var subtotal = items.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var subtotal = checkoutItems.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
   var grandTotal = subtotal + DELIVERY_CHARGE;
   document.getElementById('coSubtotal').textContent = formatPrice(subtotal);
   document.getElementById('coDelivery').textContent = 'Rs. ' + DELIVERY_CHARGE;
@@ -457,46 +450,36 @@ function placeOrder() {
     return;
   }
 
-  var user = getCurrentUser();
-  if (cart.length > 0) sessionStorage.removeItem('gentifyBuyNow');
-  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
-  if (buyNowData) {
-    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  var checkoutData = sessionStorage.getItem('gentifyCheckoutItems');
+  var checkoutItems = [];
+  if (checkoutData) {
+    try { checkoutItems = JSON.parse(checkoutData); } catch(e) { checkoutItems = []; }
   }
 
+  if (checkoutItems.length === 0) {
+    showToast('No items to order.');
+    return;
+  }
+
+  var user = getCurrentUser();
   if (!user) {
     showToast('Please sign in to place an order.');
     window.location.href = 'login.html?redirect=checkout.html';
     return;
   }
 
-  var orderItems;
-  var subtotal;
-  if (buyNowData) {
-    orderItems = [{
-      id: buyNowData.id,
-      name: buyNowData.name,
-      img: buyNowData.images[0],
-      qty: buyNowData.qty,
-      price: buyNowData.price,
-      color: buyNowData.selectedColor,
-      size: buyNowData.selectedSize
-    }];
-    subtotal = buyNowData.price * buyNowData.qty;
-  } else {
-    orderItems = cart.map(function(item) {
-      return {
-        id: item.id,
-        name: item.name,
-        img: item.images[0],
-        qty: item.qty,
-        price: item.price,
-        color: item.selectedColor,
-        size: item.selectedSize
-      };
-    });
-    subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
-  }
+  var orderItems = checkoutItems.map(function(item) {
+    return {
+      id: item.id,
+      name: item.name,
+      img: item.images ? item.images[0] : '',
+      qty: item.qty,
+      price: item.price,
+      color: item.selectedColor,
+      size: item.selectedSize
+    };
+  });
+  var subtotal = checkoutItems.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
   var grandTotal = subtotal + DELIVERY_CHARGE;
 
   var now = new Date();
@@ -534,7 +517,7 @@ function placeOrder() {
   if (userIdx >= 0) {
     if (!users[userIdx].orders) users[userIdx].orders = [];
     users[userIdx].orders.push(order);
-    if (!buyNowData) users[userIdx].cart = [];
+    users[userIdx].cart = [];
     saveUsers(users);
   } else {
     users.push({
@@ -548,13 +531,10 @@ function placeOrder() {
     saveUsers(users);
   }
 
-  if (buyNowData) {
-    sessionStorage.removeItem('gentifyBuyNow');
-  } else {
-    cart = [];
-    saveCart();
-    updateCartUI();
-  }
+  sessionStorage.removeItem('gentifyCheckoutItems');
+  cart = [];
+  saveCart();
+  updateCartUI();
 
   showToast('Order placed successfully! Thank you for your purchase.');
 
