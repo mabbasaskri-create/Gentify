@@ -489,15 +489,11 @@ function detailAddToCart() {
 
 function detailBuyNow() {
   if (!detailProduct) return;
+  var p = detailProduct, s = detailSelectedSize, c = detailSelectedColor, q = detailQty;
   closeProductDetail();
   sessionStorage.setItem('gentifyBuyNow', JSON.stringify({
-    id: detailProduct.id,
-    name: detailProduct.name,
-    price: detailProduct.price,
-    images: detailProduct.images,
-    selectedSize: detailSelectedSize,
-    selectedColor: detailSelectedColor,
-    qty: detailQty
+    id: p.id, name: p.name, price: p.price, images: p.images,
+    selectedSize: s, selectedColor: c, qty: q
   }));
   window.location.href = 'checkout.html';
 }
