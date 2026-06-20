@@ -151,7 +151,7 @@ window.syncBannerFromFirestore = function(callback) {
         var parsed = JSON.parse(d.dataJson);
         // Only overwrite localStorage if Firestore actually has image data
         if (parsed.desktop || parsed.mobile) {
-          localStorage.setItem('gentifyBanner', JSON.stringify(parsed));
+          try { localStorage.setItem('gentifyBanner', JSON.stringify(parsed)); } catch (e) {}
         }
       }
     }

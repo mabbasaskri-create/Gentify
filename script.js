@@ -24,7 +24,7 @@ window.onAuthStateChanged(function(firebaseUser) {
           var idx = cache.findIndex(function(u) { return u.email === firebaseUser.email; });
           if (idx >= 0) cache[idx] = existing;
           else cache.push(existing);
-          localStorage.setItem('gentifyUsers', JSON.stringify(cache));
+          try { localStorage.setItem('gentifyUsers', JSON.stringify(cache)); } catch (e) {}
 
           if (existing.cart) {
             cart = existing.cart;
@@ -35,7 +35,7 @@ window.onAuthStateChanged(function(firebaseUser) {
           var cache = getUsers();
           if (!cache.find(function(u) { return u.email === firebaseUser.email; })) {
             cache.push(userData);
-            localStorage.setItem('gentifyUsers', JSON.stringify(cache));
+            try { localStorage.setItem('gentifyUsers', JSON.stringify(cache)); } catch (e) {}
           }
         }
       }).catch(function() {});
@@ -181,8 +181,7 @@ function loadProdFromFirestore() {
 function syncToFirestore(prods) {
   if (typeof window.syncProductsToFirestore === 'function') {
     window.syncProductsToFirestore(prods || getProducts()).then(function() {
-      // Use Firestore's timestamp as the authoritative one
-      localStorage.setItem('gentifyProductsTS', String(Date.now()));
+      try { localStorage.setItem('gentifyProductsTS', String(Date.now())); } catch (e) {}
     }).catch(function() {});
   }
 }
@@ -192,8 +191,8 @@ function syncFromFirestore(callback) {
     if (result && result.data && Object.keys(result.data).length > 0) {
       var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
       if (result.updated > localTS) {
-        localStorage.setItem('gentifyProductsTS', String(result.updated));
-        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+        try { localStorage.setItem('gentifyProductsTS', String(result.updated)); } catch (e) {}
+        try { localStorage.setItem('gentifyProducts', JSON.stringify(result.data)); } catch (e) {}
         products = result.data;
         allProducts = getAllProductsFlat();
       }
@@ -211,7 +210,7 @@ function syncCollectionsFromFirestore(callback) {
   }
   window.loadCollectionsFromFirestore().then(function(result) {
     if (result && result.data && result.data.length > 0) {
-      localStorage.setItem('gentifyCollections', JSON.stringify(result.data));
+      try { localStorage.setItem('gentifyCollections', JSON.stringify(result.data)); } catch (e) {}
     }
     if (callback) callback();
   }).catch(function() {
@@ -273,8 +272,8 @@ function renderBanner() {
 (function initApp() {
   var cached = getProducts();
   if (Object.keys(cached).length === 0) {
-    localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS));
-    localStorage.setItem('gentifyProductsTS', String(Date.now()));
+    try { localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS)); } catch (e) {}
+    try { localStorage.setItem('gentifyProductsTS', String(Date.now())); } catch (e) {}
     products = DEFAULT_PRODUCTS;
     allProducts = getAllProductsFlat();
   } else {
@@ -306,7 +305,9 @@ function renderBanner() {
 })();
 
 // ===== CART STATE =====
-let cart = JSON.parse(localStorage.getItem('gentifyCart') || '[]');
+let cart = JSON.parse(localStorage.getItem('gentifyCart') || '[]').map(function(item) {
+  return { id: item.id, cartKey: item.cartKey, selectedSize: item.selectedSize, selectedColor: item.selectedColor, qty: item.qty, name: item.name, price: item.price };
+});
 var DELIVERY_CHARGES = 300;
 
 // ===== DETAIL STATE =====
@@ -628,7 +629,7 @@ function addToCart(product, size, color, qty) {
   if (existing) {
     existing.qty += qty;
   } else {
-    cart.push({ ...product, cartKey, selectedSize: size, selectedColor: color, qty });
+    cart.push({ id: product.id, cartKey, selectedSize: size, selectedColor: color, qty, name: product.name, price: product.price, images: product.images ? [product.images[0]] : [] });
   }
   saveCart();
   updateCartUI();
@@ -636,7 +637,12 @@ function addToCart(product, size, color, qty) {
 }
 
 function saveCart() {
-  localStorage.setItem('gentifyCart', JSON.stringify(cart));
+  try {
+    localStorage.setItem('gentifyCart', JSON.stringify(cart));
+  } catch (e) {
+    showToast('Cart storage is full. Try removing some items or clearing your cart.');
+    return;
+  }
   var user = getCurrentUser();
   if (user && typeof window.getFirestoreUser === 'function') {
     window.getFirestoreUser(user.email).then(function(data) {
@@ -666,9 +672,11 @@ function updateCartUI() {
     if (footerEl) footerEl.style.display = 'none';
   } else {
     if (footerEl) footerEl.style.display = 'block';
-    itemsEl.innerHTML = cart.map(item => `
+    itemsEl.innerHTML = cart.map(item => {
+      const full = allProducts.find(p => p.id === item.id);
+      return `
       <div class="cart-item">
-        <img src="${item.images[0]}" alt="${item.name}" />
+        <img src="${full ? full.images[0] : ''}" alt="${item.name}" />
         <div class="cart-item-info">
           <div class="cart-item-name">${item.name}</div>
           <div class="cart-item-options">${[item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ')}</div>
@@ -680,8 +688,8 @@ function updateCartUI() {
           </div>
           <button class="remove-item" onclick="removeItem('${item.cartKey}')">Remove</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 }
 
@@ -794,7 +802,11 @@ document.addEventListener('keydown', (e) => {
 // ===== AUTH SYSTEM =====
 function getUsers() { return JSON.parse(localStorage.getItem('gentifyUsers') || '[]'); }
 function saveUsers(users) {
-  localStorage.setItem('gentifyUsers', JSON.stringify(users));
+  try {
+    localStorage.setItem('gentifyUsers', JSON.stringify(users));
+  } catch (e) {
+    showToast('Storage full! Unable to save user data.');
+  }
   if (typeof window.setFirestoreUser === 'function') {
     users.forEach(function(u) {
       if (u.email) window.setFirestoreUser(u.email, u).catch(function() {});
@@ -803,7 +815,7 @@ function saveUsers(users) {
 }
 function getCurrentUser() { return JSON.parse(localStorage.getItem('gentifyCurrentUser') || 'null'); }
 function saveCurrentUser(user) {
-  if (user) localStorage.setItem('gentifyCurrentUser', JSON.stringify(user));
+  if (user) { try { localStorage.setItem('gentifyCurrentUser', JSON.stringify(user)); } catch (e) {} }
   else localStorage.removeItem('gentifyCurrentUser');
 }
 
@@ -825,7 +837,7 @@ function signupUser(name, email, password) {
   if (typeof window.setFirestoreUser === 'function') {
     window.setFirestoreUser(email, newUser).catch(function() {});
   }
-  localStorage.setItem('gentifyUsers', JSON.stringify(users));
+  try { localStorage.setItem('gentifyUsers', JSON.stringify(users)); } catch (e) {}
   saveCurrentUser({ name: name, email: email });
   updateUserNav();
   return { success: true };
@@ -1020,7 +1032,7 @@ function syncUsersFromFirestore(callback) {
           });
         }
       });
-      localStorage.setItem('gentifyUsers', JSON.stringify(users));
+      try { localStorage.setItem('gentifyUsers', JSON.stringify(users)); } catch (e) {}
     }
     if (callback) callback();
   }).catch(function() {
