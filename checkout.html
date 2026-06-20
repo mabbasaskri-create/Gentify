@@ -49,6 +49,9 @@
 <div class="checkout-page" id="checkoutPage">
   <div id="checkoutContent">
     <h2>Checkout</h2>
+    <div class="login-notice" id="loginNotice" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.93rem;color:#664d03">
+      Please <a href="login.html?redirect=checkout.html" style="color:#664d03;font-weight:700">sign in</a> before placing your order to track it and view your order history.
+    </div>
     <div class="checkout-layout">
       <div class="checkout-form-section">
         <div class="checkout-form">
@@ -274,12 +277,24 @@ function normalizePhone(phone) {
 }
 
 function renderCheckout() {
+  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
+  if (buyNowData) {
+    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  }
   var user = getCurrentUser();
-  if (!user) {
+
+  if (!user && !buyNowData) {
     window.location.href = 'login.html?redirect=checkout.html';
     return;
   }
-  if (cart.length === 0) {
+
+  if (!user && buyNowData) {
+    document.getElementById('loginNotice').style.display = 'block';
+  } else {
+    document.getElementById('loginNotice').style.display = 'none';
+  }
+
+  if (!buyNowData && cart.length === 0) {
     document.getElementById('checkoutContent').style.display = 'none';
     document.getElementById('checkoutEmpty').style.display = 'block';
     return;
@@ -300,7 +315,8 @@ function renderCheckout() {
   }
 
   var itemsContainer = document.getElementById('checkoutItems');
-  itemsContainer.innerHTML = cart.map(function(item) {
+  var checkoutItems = buyNowData ? [buyNowData] : cart;
+  itemsContainer.innerHTML = checkoutItems.map(function(item) {
     return '<div class="checkout-item">' +
       '<img src="' + item.images[0] + '" alt="' + item.name + '" />' +
       '<div class="checkout-item-info">' +
@@ -316,7 +332,12 @@ function renderCheckout() {
 }
 
 function updateCheckoutSummary() {
-  var subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
+  if (buyNowData) {
+    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  }
+  var items = buyNowData ? [buyNowData] : cart;
+  var subtotal = items.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
   var grandTotal = subtotal + DELIVERY_CHARGE;
   document.getElementById('coSubtotal').textContent = formatPrice(subtotal);
   document.getElementById('coDelivery').textContent = 'Rs. ' + DELIVERY_CHARGE;
@@ -434,29 +455,48 @@ function placeOrder() {
   }
 
   var user = getCurrentUser();
+  var buyNowData = sessionStorage.getItem('gentifyBuyNow');
+  if (buyNowData) {
+    try { buyNowData = JSON.parse(buyNowData); } catch(e) { buyNowData = null; }
+  }
+
   if (!user) {
     showToast('Please sign in to place an order.');
     window.location.href = 'login.html?redirect=checkout.html';
     return;
   }
 
-  var subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  var orderItems;
+  var subtotal;
+  if (buyNowData) {
+    orderItems = [{
+      id: buyNowData.id,
+      name: buyNowData.name,
+      img: buyNowData.images[0],
+      qty: buyNowData.qty,
+      price: buyNowData.price,
+      color: buyNowData.selectedColor,
+      size: buyNowData.selectedSize
+    }];
+    subtotal = buyNowData.price * buyNowData.qty;
+  } else {
+    orderItems = cart.map(function(item) {
+      return {
+        id: item.id,
+        name: item.name,
+        img: item.images[0],
+        qty: item.qty,
+        price: item.price,
+        color: item.selectedColor,
+        size: item.selectedSize
+      };
+    });
+    subtotal = cart.reduce(function(s, i) { return s + i.price * i.qty; }, 0);
+  }
   var grandTotal = subtotal + DELIVERY_CHARGE;
 
   var now = new Date();
   var orderId = 'ORD-' + now.getTime().toString(36).toUpperCase();
-
-  var orderItems = cart.map(function(item) {
-    return {
-      id: item.id,
-      name: item.name,
-      img: item.images[0],
-      qty: item.qty,
-      price: item.price,
-      color: item.selectedColor,
-      size: item.selectedSize
-    };
-  });
 
   var order = {
     id: orderId,
@@ -490,7 +530,7 @@ function placeOrder() {
   if (userIdx >= 0) {
     if (!users[userIdx].orders) users[userIdx].orders = [];
     users[userIdx].orders.push(order);
-    users[userIdx].cart = [];
+    if (!buyNowData) users[userIdx].cart = [];
     saveUsers(users);
   } else {
     users.push({
@@ -504,9 +544,13 @@ function placeOrder() {
     saveUsers(users);
   }
 
-  cart = [];
-  saveCart();
-  updateCartUI();
+  if (buyNowData) {
+    sessionStorage.removeItem('gentifyBuyNow');
+  } else {
+    cart = [];
+    saveCart();
+    updateCartUI();
+  }
 
   showToast('Order placed successfully! Thank you for your purchase.');
 

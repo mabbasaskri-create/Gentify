@@ -489,8 +489,16 @@ function detailAddToCart() {
 
 function detailBuyNow() {
   if (!detailProduct) return;
-  addToCart(detailProduct, detailSelectedSize, detailSelectedColor, detailQty);
   closeProductDetail();
+  sessionStorage.setItem('gentifyBuyNow', JSON.stringify({
+    id: detailProduct.id,
+    name: detailProduct.name,
+    price: detailProduct.price,
+    images: detailProduct.images,
+    selectedSize: detailSelectedSize,
+    selectedColor: detailSelectedColor,
+    qty: detailQty
+  }));
   window.location.href = 'checkout.html';
 }
 
@@ -631,7 +639,15 @@ function pdAddToCart() {
 
 function pdBuyNow() {
   if (!pdProduct) return;
-  addToCart(pdProduct, pdSelectedSize, pdSelectedColor, pdQty);
+  sessionStorage.setItem('gentifyBuyNow', JSON.stringify({
+    id: pdProduct.id,
+    name: pdProduct.name,
+    price: pdProduct.price,
+    images: pdProduct.images,
+    selectedSize: pdSelectedSize,
+    selectedColor: pdSelectedColor,
+    qty: pdQty
+  }));
   window.location.href = 'checkout.html';
 }
 
