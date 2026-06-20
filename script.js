@@ -306,7 +306,7 @@ function renderBanner() {
 
 // ===== CART STATE =====
 let cart = JSON.parse(localStorage.getItem('gentifyCart') || '[]').map(function(item) {
-  return { id: item.id, cartKey: item.cartKey, selectedSize: item.selectedSize, selectedColor: item.selectedColor, qty: item.qty, name: item.name, price: item.price };
+  return { id: item.id, cartKey: item.cartKey, selectedSize: item.selectedSize, selectedColor: item.selectedColor, qty: item.qty, name: item.name, price: item.price, images: item.images || [] };
 });
 var DELIVERY_CHARGES = 300;
 

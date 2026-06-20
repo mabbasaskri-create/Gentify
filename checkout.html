@@ -30,7 +30,6 @@
     <li><a href="wallets.html">Wallets</a></li>
     <li><a href="about.html">About</a></li>
     <li><a href="returns.html">Returns</a></li>
-    <li><a href="cart.html">Cart</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="user-nav" id="userNav"></div>
@@ -317,8 +316,9 @@ function renderCheckout() {
   var itemsContainer = document.getElementById('checkoutItems');
   var checkoutItems = buyNowData ? [buyNowData] : cart;
   itemsContainer.innerHTML = checkoutItems.map(function(item) {
+    var img = item.images && item.images[0] ? item.images[0] : '';
     return '<div class="checkout-item">' +
-      '<img src="' + item.images[0] + '" alt="' + item.name + '" />' +
+      '<img src="' + img + '" alt="' + item.name + '" />' +
       '<div class="checkout-item-info">' +
       '<div class="checkout-item-name">' + item.name + '</div>' +
       '<div class="checkout-item-opts">' + [item.selectedSize, item.selectedColor].filter(Boolean).join(' \u00B7 ') + '</div>' +
