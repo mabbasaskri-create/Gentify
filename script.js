@@ -26,8 +26,12 @@ window.onAuthStateChanged(function(firebaseUser) {
           else cache.push(existing);
           try { localStorage.setItem('gentifyUsers', JSON.stringify(cache)); } catch (e) {}
 
-          if (existing.cart) {
-            cart = existing.cart;
+          if (existing.cart && existing.cart.length > 0) {
+            existing.cart.forEach(function(fsItem) {
+              if (!cart.find(function(c) { return c.cartKey === fsItem.cartKey; })) {
+                cart.push(fsItem);
+              }
+            });
             saveCart();
           }
         } else {
@@ -757,8 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkout() {
   closeCart();
   if (!isLoggedIn()) {
-    var current = window.location.pathname.split('/').pop();
-    window.location.href = 'login.html?redirect=' + current;
+    window.location.href = 'login.html?redirect=checkout.html';
     return;
   }
   window.location.href = 'checkout.html';
