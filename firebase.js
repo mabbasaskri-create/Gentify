@@ -23,23 +23,27 @@ window.uploadProductImage = function(file) {
     var reader = new FileReader();
     reader.onload = function(e) {
       var dataUrl = e.target.result;
+      if (dataUrl.length < 200000) { resolve(dataUrl); return; }
       var img = new Image();
       img.onload = function() {
-        var MAX = 1000;
-        var Q = 0.7;
+        var MAX = 800, Q = 0.6;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
           else { w = Math.round(w * MAX / h); h = MAX; }
         }
-        var canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', Q));
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var out = canvas.toDataURL('image/jpeg', Q);
+          if (out.length > 300000) out = canvas.toDataURL('image/jpeg', 0.3);
+          resolve(out);
+        } catch (e) { resolve(dataUrl.length > 800000 ? '' : dataUrl); }
       };
-      img.onerror = function() { resolve(dataUrl); };
+      img.onerror = function() { resolve(''); };
       img.src = dataUrl;
     };
     reader.onerror = function() { reject(new Error('File read failed')); };
