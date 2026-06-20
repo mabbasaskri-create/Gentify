@@ -49,13 +49,10 @@ nav {
 
 .nav-links { display: flex; gap: 2.5rem; list-style: none; }
 .nav-links a {
-  text-decoration: none; color: var(--gray);
+  text-decoration: none; color: var(--black);
   font-family: 'Playfair Display', serif;
   font-size: 1.1rem; font-weight: 700;
-  transition: color 0.2s;
 }
-.nav-links a:hover { color: var(--black); }
-.nav-links a.active { color: var(--black); font-weight: 700; }
 
 .cart-btn {
   background: var(--black); color: var(--white);
@@ -1412,9 +1409,7 @@ footer {
     border-bottom: 2px solid transparent;
     letter-spacing: 0.02em;
   }
-  .nav-mobile-bottom a:hover,
   .nav-mobile-bottom a.active {
-    color: var(--black);
     border-bottom-color: var(--gold);
   }
 
