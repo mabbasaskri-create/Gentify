@@ -1527,7 +1527,7 @@ footer {
 }
 
 .collections-heading {
-  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  font-family: 'Playfair Display', serif;
   font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 600;
   color: #F5F5F5;
@@ -1610,7 +1610,7 @@ footer {
   position: relative;
   z-index: 2;
   color: #fff;
-  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  font-family: 'Playfair Display', serif;
   font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
