@@ -55,7 +55,7 @@ nav {
   transition: color 0.2s;
 }
 .nav-links a:hover { color: var(--black); }
-.nav-links a.active { color: var(--black); font-weight: 600; }
+.nav-links a.active { color: var(--black); font-weight: 700; }
 
 .cart-btn {
   background: var(--black); color: var(--white);
