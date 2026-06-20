@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
@@ -18,6 +19,27 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.uploadProductImage = function(file) {
+  var timestamp = Date.now();
+  var random = Math.random().toString(36).slice(2, 8);
+  var ext = file.name.split('.').pop();
+  var filename = timestamp + '_' + random + '.' + ext;
+  var storageRef = ref(storage, 'product_images/' + filename);
+  return uploadBytes(storageRef, file).then(function() {
+    return getDownloadURL(storageRef);
+  });
+};
+
+window.deleteStorageImage = function(url) {
+  try {
+    var storageRef = ref(storage, url);
+    return deleteObject(storageRef).catch(function() {});
+  } catch (e) {
+    return Promise.resolve();
+  }
+};
 
 var PRODUCTS_COL = collection(db, "products");
 var COLLECTIONS_DOC = doc(db, "catalog", "collections");

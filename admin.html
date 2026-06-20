@@ -359,25 +359,7 @@ function loadAdminData() {
           localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data));
           localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
         } catch (e) {
-          var slim = JSON.parse(JSON.stringify(prodResult.data));
-          Object.keys(slim).forEach(function(cat) {
-            slim[cat].forEach(function(p) {
-              if (p.images && p.images.length > 1) p.images = [p.images[0]];
-            });
-          });
-          try {
-            localStorage.setItem('gentifyProducts', JSON.stringify(slim));
-            localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
-          } catch (e2) {
-            var thinner = JSON.parse(JSON.stringify(slim));
-            Object.keys(thinner).forEach(function(cat) {
-              thinner[cat].forEach(function(p) { p.images = []; });
-            });
-            try {
-              localStorage.setItem('gentifyProducts', JSON.stringify(thinner));
-              localStorage.setItem('gentifyProductsTS', String(prodResult.updated));
-            } catch (e3) {}
-          }
+          try { localStorage.setItem('gentifyProducts', JSON.stringify(prodResult.data)); } catch (e2) {}
         }
         products = prodResult.data;
         allProducts = getAllProductsFlat();
@@ -457,51 +439,30 @@ function renderPendingImages() {
 }
 
 function removePendingImage(idx) {
+  var removed = pendingImages[idx];
   pendingImages.splice(idx, 1);
   renderPendingImages();
-}
-
-function resizeImage(img, maxW, maxH, quality) {
-  var canvas = document.createElement('canvas');
-  var w = img.width, h = img.height;
-  if (w > maxW) { h *= maxW / w; w = maxW; }
-  if (h > maxH) { w *= maxH / h; h = maxH; }
-  canvas.width = w; canvas.height = h;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL('image/jpeg', quality);
-}
-
-function filesToBase64(files) {
-  return new Promise(function(resolve) {
-    if (!files || files.length === 0) { resolve([]); return; }
-    var results = [];
-    var pending = files.length;
-    Array.from(files).forEach(function(file, i) {
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var img = new Image();
-        img.onload = function() {
-          results[i] = resizeImage(img, 800, 800, 0.8);
-          pending--;
-          if (pending === 0) resolve(results);
-        };
-        img.onerror = function() {
-          results[i] = e.target.result;
-          pending--;
-          if (pending === 0) resolve(results);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  });
+  if (removed && removed.indexOf('firebasestorage.googleapis.com') > 0) {
+    if (typeof window.deleteStorageImage === 'function') window.deleteStorageImage(removed);
+  }
 }
 
 function addFilesToPending(files) {
-  filesToBase64(Array.from(files)).then(function(images) {
-    pendingImages = pendingImages.concat(images);
+  var arr = Array.from(files);
+  if (typeof window.uploadProductImage !== 'function') {
+    showToast('Firebase Storage not available.');
+    return;
+  }
+  var btn = document.querySelector('.submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading images...'; }
+  var promises = arr.map(function(file) { return window.uploadProductImage(file); });
+  Promise.all(promises).then(function(urls) {
+    pendingImages = pendingImages.concat(urls);
     renderPendingImages();
+    if (btn) { btn.disabled = false; btn.textContent = editingProductId ? 'Update Product' : 'Save Product'; }
+  }).catch(function(e) {
+    showToast('Upload failed: ' + (e.message || 'unknown error'));
+    if (btn) { btn.disabled = false; btn.textContent = editingProductId ? 'Update Product' : 'Save Product'; }
   });
 }
 
@@ -525,6 +486,8 @@ function showAddProductForm() {
   editingProductImages = null;
   pendingImages = [];
   document.getElementById('addProductTitle').textContent = 'Add Product';
+  var btn = document.querySelector('.submit-btn');
+  if (btn) btn.textContent = 'Save Product';
   document.getElementById('apName').value = '';
   document.getElementById('apCategory').value = 'caps';
   document.getElementById('apPrice').value = '';
@@ -743,19 +706,6 @@ function editProduct(id) {
   editingProductId = id;
   editingProductImages = p.images || [];
   pendingImages = (p.images || []).slice();
-  if (typeof loadProdFromFirestore === 'function') {
-    loadProdFromFirestore().then(function(result) {
-      if (result && result.data) {
-        var all = [];
-        Object.keys(result.data).forEach(function(k) { all = all.concat(result.data[k]); });
-        var fp = all.find(function(prod) { return prod.id === id; });
-        if (fp && fp.images && fp.images.length > pendingImages.length) {
-          pendingImages = fp.images.slice();
-          renderPendingImages();
-        }
-      }
-    }).catch(function() {});
-  }
   document.getElementById('addProductTitle').textContent = 'Edit Product';
   document.getElementById('apName').value = p.name;
   document.getElementById('apCategory').value = p.categoryKey || (p.category ? p.category.toLowerCase() : 'caps');
@@ -774,6 +724,15 @@ function editProduct(id) {
 
 function deleteProductConfirm(id) {
   if (!confirm('Are you sure you want to delete this product?')) return;
+  var flat = getAllProductsFlat();
+  var p = flat.find(function(prod) { return prod.id === id; });
+  if (p && p.images && typeof window.deleteStorageImage === 'function') {
+    p.images.forEach(function(url) {
+      if (url.indexOf('firebasestorage.googleapis.com') > 0) {
+        window.deleteStorageImage(url);
+      }
+    });
+  }
   deleteProduct(id);
   reloadAdminData();
   showToast('Product deleted.');
@@ -1013,6 +972,10 @@ function loadBannerSettings() {
 
 function removeBanner(type) {
   var data = getBannerData();
+  var url = data[type];
+  if (url && url.indexOf('firebasestorage.googleapis.com') > 0) {
+    if (typeof window.deleteStorageImage === 'function') window.deleteStorageImage(url);
+  }
   data[type] = '';
   saveBannerData(data);
   renderBannerPreview(type);
@@ -1020,30 +983,23 @@ function removeBanner(type) {
 }
 
 function uploadBannerImage(file, type) {
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      var canvas = document.createElement('canvas');
-      var w = img.width, h = img.height;
-      var maxDim = type === 'desktop' ? 1920 : 1200;
-      if (w > maxDim) { h *= maxDim / w; w = maxDim; }
-      if (h > maxDim) { w *= maxDim / h; h = maxDim; }
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, w, h);
-      var base64 = canvas.toDataURL('image/jpeg', 0.95);
-      var data = getBannerData();
-      data[type] = base64;
-      saveBannerData(data);
-      renderBannerPreview(type);
-      showToast((type.charAt(0).toUpperCase() + type.slice(1)) + ' banner uploaded!');
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+  if (typeof window.uploadProductImage !== 'function') {
+    showToast('Firebase Storage not available.');
+    return;
+  }
+  var btn = document.getElementById('syncBannerBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
+  window.uploadProductImage(file).then(function(url) {
+    var data = getBannerData();
+    data[type] = url;
+    saveBannerData(data);
+    renderBannerPreview(type);
+    showToast((type.charAt(0).toUpperCase() + type.slice(1)) + ' banner uploaded!');
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync to Firebase'; }
+  }).catch(function(e) {
+    showToast('Upload failed: ' + (e.message || 'unknown error'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync to Firebase'; }
+  });
 }
 
 function syncBanner() {
@@ -1086,9 +1042,12 @@ document.addEventListener('DOMContentLoaded', function() {
     this.value = '';
   });
   document.getElementById('colImageInput').addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-      filesToBase64([this.files[0]]).then(function(images) {
-        if (images[0]) { colPendingImage = images[0]; renderColImagePreview(); }
+    if (this.files && this.files[0] && typeof window.uploadProductImage === 'function') {
+      window.uploadProductImage(this.files[0]).then(function(url) {
+        colPendingImage = url;
+        renderColImagePreview();
+      }).catch(function() {
+        showToast('Collection image upload failed.');
       });
     }
     this.value = '';
