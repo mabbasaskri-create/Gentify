@@ -3,7 +3,6 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
 
-
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
   authDomain: "gentify-bbd67.firebaseapp.com",
@@ -20,47 +19,34 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
 window.uploadProductImage = function(file) {
-  var timestamp = Date.now();
-  var random = Math.random().toString(36).slice(2, 8);
-  var ext = file.name.split('.').pop();
-  var filename = timestamp + '_' + random + '.' + ext;
-
   return new Promise(function(resolve, reject) {
     var reader = new FileReader();
-    reader.onload = async function() {
-      try {
-        var base64 = reader.result.split(',')[1];
-        if (!auth.currentUser) { reject(new Error('Not authenticated')); return; }
-        var token = await auth.currentUser.getIdToken();
-        var resp = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file: base64, filename: filename, contentType: file.type, token: token })
-        });
-        var data = await resp.json();
-        if (data.url) resolve(data.url);
-        else reject(new Error(data.error || 'Upload failed'));
-      } catch (e) { reject(e); }
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      var img = new Image();
+      img.onload = function() {
+        var MAX = 800;
+        var w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = function() { resolve(dataUrl); };
+      img.src = dataUrl;
     };
     reader.onerror = function() { reject(new Error('File read failed')); };
     reader.readAsDataURL(file);
   });
 };
 
-window.deleteStorageImage = async function(url) {
-  try {
-    if (!auth.currentUser) return;
-    var token = await auth.currentUser.getIdToken();
-    var match = url.match(/\/o\/(.+?)(\?|$)/);
-    if (!match) return;
-    var path = decodeURIComponent(match[1]);
-    await fetch('/api/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: path, token: token })
-    });
-  } catch (e) {}
-};
+window.deleteStorageImage = function() { return Promise.resolve(); };
 
 var PRODUCTS_COL = collection(db, "products");
 var COLLECTIONS_DOC = doc(db, "catalog", "collections");
