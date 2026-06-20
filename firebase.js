@@ -99,12 +99,13 @@ window.syncProductsToFirestore = function(prods) {
       });
 
       allProducts.forEach(function(p) {
-        var data = Object.assign({}, p);
-        delete data._categoryKey;
+        var images = p.images || [];
+        var data = {};
+        ['id','name','category','categoryKey','price','retailPrice','desc','sizes','colors','badge','premium','_categoryKey'].forEach(function(k) {
+          if (p[k] !== undefined && p[k] !== null) data[k] = p[k];
+        });
         data.categoryKey = (p.categoryKey || p.category || 'caps').toLowerCase();
         data._updated = syncTime;
-        var images = data.images || [];
-        delete data.images;
 
         promises.push(setDoc(doc(db, "products", p.id), data));
 
