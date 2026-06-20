@@ -488,7 +488,7 @@ function detailQtyChange(delta) {
 function updateDetailAddBtn() {
   const btn = document.getElementById('detailAddBtn');
   if (!detailProduct) return;
-  btn.textContent = 'Add to Cart \u2014 ' + formatPrice(detailProduct.price * detailQty);
+  btn.textContent = 'Add to Cart';
 }
 
 function detailAddToCart() {
@@ -634,7 +634,7 @@ function pdQtyChange(delta) {
 function updatePdAddBtn() {
   var btn = document.getElementById('pdAddBtn');
   if (!pdProduct) return;
-  btn.textContent = 'Add to Cart \u2014 ' + formatPrice(pdProduct.price * pdQty);
+  btn.textContent = 'Add to Cart';
 }
 
 function pdAddToCart() {
