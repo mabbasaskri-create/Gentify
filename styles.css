@@ -373,7 +373,7 @@ nav {
 
 /* ===== TESTIMONIALS ===== */
 .testimonials-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 .testimonial-card {
@@ -1438,7 +1438,7 @@ footer {
   .feature-icon { font-size: 1.4rem; margin-bottom: 6px; }
   .feature-title { font-size: 0.9rem; margin-bottom: 4px; }
   .feature-desc { font-size: 0.78rem; }
-  .testimonials-grid { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
   .newsletter { padding: 48px 4%; }
   .newsletter-form { flex-direction: column; }
