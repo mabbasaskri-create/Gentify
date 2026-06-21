@@ -299,6 +299,7 @@ function renderBanner() {
   if (typeof window.loadProductsFast === 'function') {
     window.loadProductsFast().then(function(result) {
       if (result && result.data && Object.keys(result.data).length > 0) {
+        if (result.updated > _lastRenderTS) _lastRenderTS = result.updated;
         products = result.data;
         allProducts = getAllProductsFlat();
         renderAllProductGrids();
@@ -317,12 +318,16 @@ function renderBanner() {
   syncBannerFromFirestore();
   syncUsersFromFirestore();
 
+  var _lastRenderTS = 0;
+
   if (typeof window.subscribeProducts === 'function') {
     window.subscribeProducts(function(result) {
       try {
         localStorage.setItem('gentifyProductsTS', String(result.updated));
         localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
       } catch (e) {}
+      if (result.updated <= _lastRenderTS) return;
+      _lastRenderTS = result.updated;
       products = result.data;
       allProducts = getAllProductsFlat();
       renderAllProductGrids();

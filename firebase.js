@@ -299,7 +299,7 @@ window.loadProductsFromFirestore = function() {
     });
 
     return { data: grouped, updated: maxUpdated || Date.now() };
-  });
+  }).catch(function() { return null; });
 };
 
 // ===== USERS (Firestore) =====
@@ -361,8 +361,8 @@ window.subscribeProducts = function(onChange) {
     if (!_syncReady) { _syncReady = true; return; }
     if (_syncTimer) clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() {
-      if (typeof window.loadProductsFast === 'function') {
-        window.loadProductsFast().then(function(result) {
+      if (typeof window.loadProductsFromFirestore === 'function') {
+        window.loadProductsFromFirestore().then(function(result) {
           if (result && result.data && Object.keys(result.data).length > 0 && onChange) {
             onChange(result);
           }
