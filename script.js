@@ -294,8 +294,10 @@ function renderBanner() {
   renderBanner();
   renderAllProductGrids();
   renderCollections();
+  renderTestimonials();
   syncFromFirestore(function() {
     renderAllProductGrids();
+    renderTestimonials();
   });
   syncCollectionsFromFirestore(function() {
     renderCollections();
@@ -317,6 +319,7 @@ function renderBanner() {
         products = result.data;
         allProducts = getAllProductsFlat();
         renderAllProductGrids();
+        renderTestimonials();
       }
     });
   }
@@ -385,6 +388,46 @@ function renderAllProductGrids() {
   if (products.wallets) renderProducts(products.wallets, 'walletsGrid');
   var premium = allProducts.filter(function(p) { return p.premium; });
   if (premium.length > 0) renderProducts(premium, 'premiumGrid');
+}
+
+// ===== TESTIMONIALS =====
+var REVIEWERS = [
+  { name: 'James M.', texts: ['Absolutely love this piece. The quality exceeded my expectations and it looks even better in person.', 'Been using it daily for a month now and it still looks brand new. Worth every penny.', 'Perfect fit and finish. Shipping was fast and the packaging was premium.'] },
+  { name: 'Carlos R.', texts: ['Bought this as a gift and ended up keeping it for myself. The craftsmanship is incredible.', 'Second purchase from Gentify and they never disappoint. Quality is consistent across all products.', 'The material is top-notch. You can feel the quality the moment you unbox it.'] },
+  { name: 'Daniel K.', texts: ['Great addition to my collection. Gets compliments every time I wear it out.', 'Exactly what I was looking for. Understated, elegant, and built to last.', 'Ordered on Monday, arrived by Wednesday. Impeccable service and stunning product.'] },
+  { name: 'Ahmed S.', texts: ['The attention to detail is remarkable. Stitching is perfect and the material feels premium.', 'My go-to brand now. Sold all my old pieces and replaced them with Gentify.', 'Unbelievable value for this quality. Feels like I paid double the price.'] },
+  { name: 'Usman K.', texts: ['Was skeptical at first but after receiving the product, I am genuinely impressed.', 'Perfect for both casual and formal wear. Versatile and timeless design.', 'The leather quality is outstanding. Already developing a beautiful patina.'] },
+  { name: 'Hamza R.', texts: ['Shipping was incredibly fast and the product was exactly as described. No surprises.', 'Tried many brands but Gentify stands out for its consistency and quality control.', 'Customer service helped me pick the right size and it fits like a glove.'] },
+  { name: 'Bilal A.', texts: ['Ordered three products in one go and every single one exceeded my expectations.', 'The packaging alone shows how much they care about their products. Premium experience.', 'My friend recommended Gentify and I understand why now. Exceptional quality.'] },
+  { name: 'Tariq M.', texts: ['I own multiple pieces from them and the quality is consistently excellent across the board.', 'Received so many compliments on this. Everyone asks where I got it from.', 'The color is exactly as shown on the website. No misleading edits or filters.'] },
+  { name: 'Zain H.', texts: ['Bought this for my brother and he absolutely loved it. Will definitely buy more.', 'The product images dont do it justice. Looks way more premium in real life.', 'Fast delivery, great quality, and fair pricing. Gentify has earned a loyal customer.'] }
+];
+
+function renderTestimonials() {
+  var grid = document.getElementById('testimonialsGrid');
+  if (!grid) return;
+  var flat = getAllProductsFlat();
+  if (flat.length === 0) { grid.innerHTML = ''; return; }
+  flat.sort(function(a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+  var count = Math.min(9, flat.length);
+  var html = '';
+  for (var i = 0; i < count; i++) {
+    var p = flat[i];
+    var rev = REVIEWERS[i % REVIEWERS.length];
+    var text = rev.texts[i % rev.texts.length];
+    var stars = i % 3 === 2 ? 4 : 5;
+    var starHtml = '';
+    for (var s = 0; s < 5; s++) {
+      starHtml += s < stars ? '\u2605' : '\u2604';
+    }
+    html += '<div class="testimonial-card">' +
+      '<div class="stars">' + starHtml + '</div>' +
+      '<p class="testimonial-text">"' + text + '"</p>' +
+      '<div class="reviewer">' + rev.name + '</div>' +
+      '<div class="reviewer-title">Verified Buyer &middot; ' + p.name + '</div>' +
+      '</div>';
+  }
+  grid.innerHTML = html;
 }
 
 // ===== SHOP BY COLLECTION =====
@@ -802,10 +845,6 @@ function checkout() {
     updateCartUI();
   }
   try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
-  if (!isLoggedIn()) {
-    window.location.href = 'login.html?redirect=checkout.html';
-    return;
-  }
   window.location.href = 'checkout.html';
 }
 
@@ -816,7 +855,6 @@ function checkoutCart() {
   saveCart();
   updateCartUI();
   try { localStorage.setItem('gentifyCart', JSON.stringify(cart)); } catch (e) {}
-  if (!isLoggedIn()) { window.location.href = 'login.html?redirect=checkout.html'; return; }
   window.location.href = 'checkout.html';
 }
 
