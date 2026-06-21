@@ -301,6 +301,10 @@ function renderBanner() {
   if (typeof window.loadProductsFast === 'function') {
     window.loadProductsFast().then(function(result) {
       if (result && result.data && Object.keys(result.data).length > 0) {
+        var hasImgs = Object.keys(result.data).some(function(k) {
+          return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
+        });
+        if (!hasImgs) return;
         if (result.updated > _lastRenderTS) _lastRenderTS = result.updated;
         products = result.data;
         allProducts = getAllProductsFlat();
@@ -326,15 +330,14 @@ function renderBanner() {
     window.subscribeProducts(function(result) {
       if (result.updated <= _lastRenderTS) return;
       _lastRenderTS = result.updated;
-      var hasImages = Object.keys(result.data).some(function(k) {
+      var hasImgs = Object.keys(result.data).some(function(k) {
         return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
       });
-      if (hasImages) {
-        try {
-          localStorage.setItem('gentifyProductsTS', String(result.updated));
-          localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-        } catch (e) {}
-      }
+      if (!hasImgs) return;
+      try {
+        localStorage.setItem('gentifyProductsTS', String(result.updated));
+        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+      } catch (e) {}
       products = result.data;
       allProducts = getAllProductsFlat();
       renderAllProductGrids();
