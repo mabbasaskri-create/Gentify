@@ -63,15 +63,12 @@ window.deleteStorageImage = function() { return Promise.resolve(); };
 var PRODUCTS_COL = collection(db, "products");
 var COLLECTIONS_DOC = doc(db, "catalog", "collections");
 
-getRedirectResult(auth).then(function() {}).catch(function() {});
+getRedirectResult(auth).catch(function(err) {
+  console.warn('Redirect sign-in error:', err.code || err.message);
+});
 
 window.signInWithGoogle = function() {
-  return signInWithPopup(auth, googleProvider).catch(function(err) {
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-      return signInWithRedirect(auth, googleProvider);
-    }
-    throw err;
-  });
+  return signInWithRedirect(auth, googleProvider);
 };
 window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
