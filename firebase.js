@@ -68,7 +68,12 @@ getRedirectResult(auth).catch(function(err) {
 });
 
 window.signInWithGoogle = function() {
-  return signInWithRedirect(auth, googleProvider);
+  return signInWithPopup(auth, googleProvider).catch(function(err) {
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+      return signInWithRedirect(auth, googleProvider);
+    }
+    throw err;
+  });
 };
 window.signOutGoogle = function() { return signOut(auth); };
 window.onAuthStateChanged = function(callback) { onAuthStateChanged(auth, callback); };
@@ -117,17 +122,19 @@ window.syncProductsToFirestore = function(prods) {
 
         promises.push(setDoc(doc(db, "products", p.id), data));
 
-        (imgByProduct[p.id] || []).forEach(function(img) {
-          promises.push(deleteDoc(doc(db, "productImages", img.id)));
-        });
+        if (images.length > 0) {
+          (imgByProduct[p.id] || []).forEach(function(img) {
+            promises.push(deleteDoc(doc(db, "productImages", img.id)));
+          });
 
-        images.forEach(function(dataUrl, idx) {
-          promises.push(setDoc(doc(collection(db, "productImages")), {
-            productId: p.id,
-            index: idx,
-            dataUrl: dataUrl
-          }));
-        });
+          images.forEach(function(dataUrl, idx) {
+            promises.push(setDoc(doc(collection(db, "productImages")), {
+              productId: p.id,
+              index: idx,
+              dataUrl: dataUrl
+            }));
+          });
+        }
       });
 
       promises.push(deleteDoc(doc(db, "catalog", "products")).catch(function() {}));
