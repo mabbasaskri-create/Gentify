@@ -353,54 +353,23 @@ window.syncBannerFromFirestore = function(callback) {
 };
 
 // ===== REAL-TIME LISTENERS (cross-device sync) =====
-var _productsCache = null;
-var _imagesCache = null;
-var _productsListeners = [];
-
-function _processProductData(onChange) {
-  if (!_productsCache || !_imagesCache) return;
-  var imagesByProduct = {};
-  _imagesCache.forEach(function(d) {
-    var img = d.data();
-    if (!imagesByProduct[img.productId]) imagesByProduct[img.productId] = [];
-    imagesByProduct[img.productId][img.index] = img.dataUrl;
-  });
-  var allProducts = [];
-  var maxUpdated = 0;
-  _productsCache.forEach(function(d) {
-    var p = d.data();
-    p.id = d.id;
-    var sepImages = imagesByProduct[p.id] || [];
-    p.images = (sepImages.length > 0) ? sepImages : (p.images || []);
-    if (p._updated && p._updated > maxUpdated) maxUpdated = p._updated;
-    allProducts.push(p);
-  });
-  if (allProducts.length === 0) return;
-  var grouped = {};
-  allProducts.forEach(function(p) {
-    var cat = (p.categoryKey || p.category || 'caps').toLowerCase();
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(p);
-  });
-  if (Object.keys(grouped).length > 0 && onChange) {
-    onChange({ data: grouped, updated: maxUpdated || Date.now() });
-  }
-}
+var _syncTimer = null;
+var _syncReady = false;
 
 window.subscribeProducts = function(onChange) {
-  _productsCache = null;
-  _imagesCache = null;
-  var unsub1 = onSnapshot(PRODUCTS_COL, function(snap) {
-    _productsCache = snap;
-    _processProductData(onChange);
+  return onSnapshot(PRODUCTS_COL, function() {
+    if (!_syncReady) { _syncReady = true; return; }
+    if (_syncTimer) clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() {
+      if (typeof window.loadProductsFast === 'function') {
+        window.loadProductsFast().then(function(result) {
+          if (result && result.data && Object.keys(result.data).length > 0 && onChange) {
+            onChange(result);
+          }
+        });
+      }
+    }, 500);
   });
-  var unsub2 = onSnapshot(collection(db, "productImages"), function(snap) {
-    _imagesCache = snap;
-    _processProductData(onChange);
-  });
-  var unsub = function() { unsub1(); unsub2(); };
-  _productsListeners.push(unsub);
-  return unsub;
 };
 
 window.subscribeBanner = function(onChange) {
