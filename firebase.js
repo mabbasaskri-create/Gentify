@@ -81,10 +81,13 @@ window.loadProductsFast = function() {
       if (!grouped[p.categoryKey]) grouped[p.categoryKey] = [];
       grouped[p.categoryKey].push(p);
     });
-    try {
-      localStorage.setItem('gentifyProducts', JSON.stringify(grouped));
-      localStorage.setItem('gentifyProductsTS', String(maxUpdated || Date.now()));
-    } catch (e) {}
+    var hasImages = allProducts.some(function(p) { return p.images && p.images.length > 0; });
+    if (hasImages) {
+      try {
+        localStorage.setItem('gentifyProducts', JSON.stringify(grouped));
+        localStorage.setItem('gentifyProductsTS', String(maxUpdated || Date.now()));
+      } catch (e) {}
+    }
     return { data: grouped, updated: maxUpdated || Date.now() };
   }).catch(function() { return null; });
 };
@@ -232,10 +235,13 @@ window.syncProductsToFirestore = function(prods) {
           });
 
           images.forEach(function(dataUrl, idx) {
+            if (!dataUrl || dataUrl === '') return;
             promises.push(setDoc(doc(collection(db, "productImages")), {
               productId: p.id,
               index: idx,
               dataUrl: dataUrl
+            }).catch(function(err) {
+              console.error('Failed to save image for', p.id, 'index', idx, err);
             }));
           });
         }

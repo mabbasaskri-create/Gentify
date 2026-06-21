@@ -194,7 +194,9 @@ function syncToFirestore(prods) {
   if (typeof window.syncProductsToFirestore === 'function') {
     window.syncProductsToFirestore(prods || getProducts()).then(function() {
       localStorage.setItem('gentifyProductsTS', String(Date.now()));
-    }).catch(function() {});
+    }).catch(function(err) {
+      console.error('syncToFirestore failed:', err);
+    });
   }
 }
 
@@ -322,12 +324,17 @@ function renderBanner() {
 
   if (typeof window.subscribeProducts === 'function') {
     window.subscribeProducts(function(result) {
-      try {
-        localStorage.setItem('gentifyProductsTS', String(result.updated));
-        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-      } catch (e) {}
       if (result.updated <= _lastRenderTS) return;
       _lastRenderTS = result.updated;
+      var hasImages = Object.keys(result.data).some(function(k) {
+        return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
+      });
+      if (hasImages) {
+        try {
+          localStorage.setItem('gentifyProductsTS', String(result.updated));
+          localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+        } catch (e) {}
+      }
       products = result.data;
       allProducts = getAllProductsFlat();
       renderAllProductGrids();
