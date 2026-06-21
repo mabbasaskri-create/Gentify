@@ -123,7 +123,9 @@ function saveProducts(prods) {
     localStorage.setItem('gentifyProducts', JSON.stringify(prods));
     localStorage.setItem('gentifyProductsTS', String(Date.now()));
   } catch (e) {
-    try { localStorage.setItem('gentifyProducts', JSON.stringify(prods)); } catch (e2) {}
+    if (typeof showToast === 'function') {
+      showToast('Local storage full! Products saved to cloud. Free up space or the page may not load offline.');
+    }
   }
   products = prods;
   allProducts = getAllProductsFlat();
@@ -190,7 +192,9 @@ function loadProdFromFirestore() {
 
 function syncToFirestore(prods) {
   if (typeof window.syncProductsToFirestore === 'function') {
-    window.syncProductsToFirestore(prods || getProducts());
+    window.syncProductsToFirestore(prods || getProducts()).then(function() {
+      localStorage.setItem('gentifyProductsTS', String(Date.now()));
+    }).catch(function() {});
   }
 }
 
@@ -305,6 +309,36 @@ function renderBanner() {
     renderBanner();
   });
   syncUsersFromFirestore();
+
+  // ===== REAL-TIME LISTENERS (cross-device sync) =====
+  if (typeof window.subscribeProducts === 'function') {
+    window.subscribeProducts(function(result) {
+      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
+      if (result.updated > localTS) {
+        try {
+          localStorage.setItem('gentifyProductsTS', String(result.updated));
+          localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+        } catch (e) {}
+        products = result.data;
+        allProducts = getAllProductsFlat();
+        renderAllProductGrids();
+      }
+    });
+  }
+
+  if (typeof window.subscribeBanner === 'function') {
+    window.subscribeBanner(function(data) {
+      try { localStorage.setItem('gentifyBanner', JSON.stringify(data)); } catch (e) {}
+      renderBanner();
+    });
+  }
+
+  if (typeof window.subscribeCollections === 'function') {
+    window.subscribeCollections(function(data) {
+      try { localStorage.setItem('gentifyCollections', JSON.stringify(data)); } catch (e) {}
+      renderCollections();
+    });
+  }
 })();
 
 // ===== ACTIVE NAV =====

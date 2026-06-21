@@ -23,10 +23,10 @@ window.uploadProductImage = function(file) {
     var reader = new FileReader();
     reader.onload = function(e) {
       var dataUrl = e.target.result;
-      if (dataUrl.length < 200000) { resolve(dataUrl); return; }
+      if (dataUrl.length < 80000) { resolve(dataUrl); return; }
       var img = new Image();
       img.onload = function() {
-        var MAX = 800, Q = 0.6;
+        var MAX = 600, Q = 0.45;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -39,7 +39,14 @@ window.uploadProductImage = function(file) {
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
           var out = canvas.toDataURL('image/jpeg', Q);
-          if (out.length > 300000) out = canvas.toDataURL('image/jpeg', 0.3);
+          if (out.length > 150000) out = canvas.toDataURL('image/jpeg', 0.25);
+          if (out.length > 250000) {
+            var s2 = Math.round(Math.sqrt(150000 / out.length) * 100) / 100;
+            var nw = Math.round(w * s2), nh = Math.round(h * s2);
+            canvas.width = nw; canvas.height = nh;
+            ctx.drawImage(img, 0, 0, nw, nh);
+            out = canvas.toDataURL('image/jpeg', 0.2);
+          }
           resolve(out);
         } catch (e) { resolve(dataUrl.length > 800000 ? '' : dataUrl); }
       };
@@ -234,5 +241,48 @@ window.syncBannerFromFirestore = function(callback) {
     if (callback) callback();
   }).catch(function() {
     if (callback) callback();
+  });
+};
+
+// ===== REAL-TIME LISTENERS (cross-device sync) =====
+window.subscribeProducts = function(onChange) {
+  var timer = null;
+  return onSnapshot(PRODUCTS_COL, function() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(function() {
+      window.loadProductsFromFirestore().then(function(result) {
+        if (result && result.data && Object.keys(result.data).length > 0 && onChange) {
+          onChange(result);
+        }
+      }).catch(function() {});
+    }, 800);
+  });
+};
+
+window.subscribeBanner = function(onChange) {
+  return onSnapshot(BANNER_DOC, function(snap) {
+    if (snap.exists()) {
+      var d = snap.data();
+      if (d.dataJson) {
+        var parsed = JSON.parse(d.dataJson);
+        if ((parsed.desktop || parsed.mobile) && onChange) {
+          onChange(parsed);
+        }
+      }
+    }
+  });
+};
+
+window.subscribeCollections = function(onChange) {
+  return onSnapshot(COLLECTIONS_DOC, function(snap) {
+    if (snap.exists()) {
+      var d = snap.data();
+      if (d.dataJson) {
+        var parsed = JSON.parse(d.dataJson);
+        if (parsed.length > 0 && onChange) {
+          onChange(parsed);
+        }
+      }
+    }
   });
 };
