@@ -287,12 +287,7 @@ function renderBanner() {
 // Initialize: render from cache instantly, then sync Firestore in background
 (function initApp() {
   var cached = getProducts();
-  if (Object.keys(cached).length === 0) {
-    try { localStorage.setItem('gentifyProducts', JSON.stringify(DEFAULT_PRODUCTS)); } catch (e) {}
-    try { localStorage.setItem('gentifyProductsTS', String(Date.now())); } catch (e) {}
-    products = DEFAULT_PRODUCTS;
-    allProducts = getAllProductsFlat();
-  } else {
+  if (Object.keys(cached).length > 0) {
     products = cached;
     allProducts = getAllProductsFlat();
   }
