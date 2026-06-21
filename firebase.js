@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, onSnapshot, enableIndexedDbPersistence } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0",
@@ -18,6 +18,110 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
+var FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/gentify-bbd67/databases/(default)/documents";
+var API_KEY = "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0";
+
+window.loadProductsFast = function() {
+  return Promise.all([
+    fetch(FIRESTORE_BASE + "/products?key=" + API_KEY).then(function(r) { return r.json(); }),
+    fetch(FIRESTORE_BASE + "/productImages?key=" + API_KEY).then(function(r) { return r.json(); })
+  ]).then(function(results) {
+    var prodData = results[0];
+    var imgData = results[1];
+    var imagesByProduct = {};
+    if (imgData && imgData.documents) {
+      imgData.documents.forEach(function(doc) {
+        var fields = doc.fields || {};
+        var productId = fields.productId && fields.productId.stringValue;
+        var dataUrl = fields.dataUrl && fields.dataUrl.stringValue;
+        var index = fields.index && fields.index.integerValue;
+        if (productId && dataUrl) {
+          if (!imagesByProduct[productId]) imagesByProduct[productId] = [];
+          imagesByProduct[productId][index || 0] = dataUrl;
+        }
+      });
+    }
+    var allProducts = [];
+    var maxUpdated = 0;
+    if (prodData && prodData.documents) {
+      prodData.documents.forEach(function(doc) {
+        var f = doc.fields || {};
+        var name = doc.name || '';
+        var id = name.split('/').pop();
+        var p = { id: id };
+        ['name','category','price','retailPrice','desc','badge'].forEach(function(k) {
+          if (f[k] && f[k].stringValue) p[k] = f[k].stringValue;
+          if (f[k] && f[k].doubleValue !== undefined) p[k] = f[k].doubleValue;
+          if (f[k] && f[k].integerValue !== undefined) p[k] = parseInt(f[k].integerValue, 10);
+        });
+        p.categoryKey = (f.categoryKey && f.categoryKey.stringValue) || (p.category || 'caps').toLowerCase();
+        p.category = f.category && f.category.stringValue ? f.category.stringValue : p.categoryKey.charAt(0).toUpperCase() + p.categoryKey.slice(1);
+        p.price = parseFloat(p.price) || 0;
+        p.retailPrice = p.retailPrice ? parseFloat(p.retailPrice) : null;
+        p.premium = f.premium && f.premium.booleanValue === true;
+        if (f.sizes && f.sizes.arrayValue) {
+          p.sizes = f.sizes.arrayValue.values.map(function(v) { return v.stringValue; }).filter(Boolean);
+        }
+        if (f.colors && f.colors.arrayValue) {
+          p.colors = f.colors.arrayValue.values.map(function(v) {
+            var cv = v.mapValue.fields || {};
+            return { name: (cv.name && cv.name.stringValue) || '', hex: (cv.hex && cv.hex.stringValue) || '#ccc' };
+          });
+        }
+        var sepImages = imagesByProduct[id] || [];
+        p.images = sepImages.length > 0 ? sepImages : [];
+        var updated = f._updated && (f._updated.integerValue || f._updated.doubleValue);
+        if (updated && updated > maxUpdated) maxUpdated = parseInt(updated, 10);
+        allProducts.push(p);
+      });
+    }
+    if (allProducts.length === 0) return null;
+    var grouped = {};
+    allProducts.forEach(function(p) {
+      if (!grouped[p.categoryKey]) grouped[p.categoryKey] = [];
+      grouped[p.categoryKey].push(p);
+    });
+    try {
+      localStorage.setItem('gentifyProducts', JSON.stringify(grouped));
+      localStorage.setItem('gentifyProductsTS', String(maxUpdated || Date.now()));
+    } catch (e) {}
+    return { data: grouped, updated: maxUpdated || Date.now() };
+  }).catch(function() { return null; });
+};
+
+window.loadBannerFast = function() {
+  return fetch(FIRESTORE_BASE + "/catalog/banner?key=" + API_KEY).then(function(r) { return r.json(); }).then(function(doc) {
+    if (!doc || !doc.fields) return null;
+    var dataJson = doc.fields.dataJson && doc.fields.dataJson.stringValue;
+    if (!dataJson) return null;
+    var parsed = JSON.parse(dataJson);
+    if (parsed.desktop || parsed.mobile) {
+      try { localStorage.setItem('gentifyBanner', JSON.stringify(parsed)); } catch (e) {}
+    }
+    return parsed;
+  }).catch(function() { return null; });
+};
+
+window.loadCollectionsFast = function() {
+  return fetch(FIRESTORE_BASE + "/catalog/collections?key=" + API_KEY).then(function(r) { return r.json(); }).then(function(doc) {
+    if (!doc || !doc.fields) return null;
+    var dataJson = doc.fields.dataJson && doc.fields.dataJson.stringValue;
+    if (!dataJson) return null;
+    var parsed = JSON.parse(dataJson);
+    if (parsed && parsed.length > 0) {
+      try { localStorage.setItem('gentifyCollections', JSON.stringify(parsed)); } catch (e) {}
+    }
+    return parsed;
+  }).catch(function() { return null; });
+};
+
+enableIndexedDbPersistence(db).catch(function(err) {
+  if (err.code === 'failed-precondition') {
+    console.warn('Firestore persistence: multiple tabs open, persistence disabled.');
+  } else if (err.code === 'unimplemented') {
+    console.warn('Firestore persistence: browser not supported.');
+  }
+});
 window.uploadProductImage = function(file) {
   return new Promise(function(resolve, reject) {
     var reader = new FileReader();
@@ -249,18 +353,54 @@ window.syncBannerFromFirestore = function(callback) {
 };
 
 // ===== REAL-TIME LISTENERS (cross-device sync) =====
-window.subscribeProducts = function(onChange) {
-  var timer = null;
-  return onSnapshot(PRODUCTS_COL, function() {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(function() {
-      window.loadProductsFromFirestore().then(function(result) {
-        if (result && result.data && Object.keys(result.data).length > 0 && onChange) {
-          onChange(result);
-        }
-      }).catch(function() {});
-    }, 800);
+var _productsCache = null;
+var _imagesCache = null;
+var _productsListeners = [];
+
+function _processProductData(onChange) {
+  if (!_productsCache || !_imagesCache) return;
+  var imagesByProduct = {};
+  _imagesCache.forEach(function(d) {
+    var img = d.data();
+    if (!imagesByProduct[img.productId]) imagesByProduct[img.productId] = [];
+    imagesByProduct[img.productId][img.index] = img.dataUrl;
   });
+  var allProducts = [];
+  var maxUpdated = 0;
+  _productsCache.forEach(function(d) {
+    var p = d.data();
+    p.id = d.id;
+    var sepImages = imagesByProduct[p.id] || [];
+    p.images = (sepImages.length > 0) ? sepImages : (p.images || []);
+    if (p._updated && p._updated > maxUpdated) maxUpdated = p._updated;
+    allProducts.push(p);
+  });
+  if (allProducts.length === 0) return;
+  var grouped = {};
+  allProducts.forEach(function(p) {
+    var cat = (p.categoryKey || p.category || 'caps').toLowerCase();
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(p);
+  });
+  if (Object.keys(grouped).length > 0 && onChange) {
+    onChange({ data: grouped, updated: maxUpdated || Date.now() });
+  }
+}
+
+window.subscribeProducts = function(onChange) {
+  _productsCache = null;
+  _imagesCache = null;
+  var unsub1 = onSnapshot(PRODUCTS_COL, function(snap) {
+    _productsCache = snap;
+    _processProductData(onChange);
+  });
+  var unsub2 = onSnapshot(collection(db, "productImages"), function(snap) {
+    _imagesCache = snap;
+    _processProductData(onChange);
+  });
+  var unsub = function() { unsub1(); unsub2(); };
+  _productsListeners.push(unsub);
+  return unsub;
 };
 
 window.subscribeBanner = function(onChange) {

@@ -291,33 +291,41 @@ function renderBanner() {
     products = cached;
     allProducts = getAllProductsFlat();
   }
-  renderBanner();
   renderAllProductGrids();
   renderCollections();
-  syncFromFirestore(function() {
-    renderAllProductGrids();
-  });
-  syncCollectionsFromFirestore(function() {
-    renderCollections();
-  });
-  syncBannerFromFirestore(function() {
-    renderBanner();
-  });
-  syncUsersFromFirestore();
+  renderBanner();
 
-  // ===== REAL-TIME LISTENERS (cross-device sync) =====
-  if (typeof window.subscribeProducts === 'function') {
-    window.subscribeProducts(function(result) {
-      var localTS = parseInt(localStorage.getItem('gentifyProductsTS') || '0', 10);
-      if (result.updated > localTS) {
-        try {
-          localStorage.setItem('gentifyProductsTS', String(result.updated));
-          localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-        } catch (e) {}
+  // ===== FAST LOAD via REST API (no Firebase SDK wait) =====
+  if (typeof window.loadProductsFast === 'function') {
+    window.loadProductsFast().then(function(result) {
+      if (result && result.data && Object.keys(result.data).length > 0) {
         products = result.data;
         allProducts = getAllProductsFlat();
         renderAllProductGrids();
       }
+    });
+  }
+  if (typeof window.loadBannerFast === 'function') {
+    window.loadBannerFast().then(function() { renderBanner(); });
+  }
+  if (typeof window.loadCollectionsFast === 'function') {
+    window.loadCollectionsFast().then(function() { renderCollections(); });
+  }
+
+  // ===== BACKGROUND: Firebase SDK setup =====
+  syncCollectionsFromFirestore();
+  syncBannerFromFirestore();
+  syncUsersFromFirestore();
+
+  if (typeof window.subscribeProducts === 'function') {
+    window.subscribeProducts(function(result) {
+      try {
+        localStorage.setItem('gentifyProductsTS', String(result.updated));
+        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+      } catch (e) {}
+      products = result.data;
+      allProducts = getAllProductsFlat();
+      renderAllProductGrids();
     });
   }
 
