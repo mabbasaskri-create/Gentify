@@ -64,57 +64,12 @@ window.onAuthStateChanged(function(firebaseUser) {
 });
 
 // ===== PRODUCT DATA =====
-var DEFAULT_PRODUCTS = {
-  caps: [
-    { id: 'c1', name: 'Classic White Cap', desc: 'Cotton twill, adjustable strap. A timeless silhouette that pairs with everything — from weekend denim to tailored sports coats.', price: 8399, badge: null, premium: false, category: 'Caps',
-      images: ['https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'],
-      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'White', hex: '#F5F5F0' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'c2', name: 'Beige Dad Hat', desc: 'Vintage washed cotton with a relaxed, worn-in feel.', price: 8999, badge: 'Popular', premium: false, category: 'Caps',
-      images: ['https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80','https://images.unsplash.com/photo-1595433707800-5b393e94297a?w=600&q=80','https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80'],
-      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Beige', hex: '#D4C5A9' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Olive', hex: '#4A5D23' }] },
-    { id: 'c3', name: 'Navy Snapback', desc: 'Structured crown with a flat brim. A bold, street-ready look.', price: 9699, badge: null, premium: false, category: 'Caps',
-      images: ['https://images.unsplash.com/photo-1556306535-38febf6782e7?w=600&q=80','https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80'],
-      sizes: ['M', 'L', 'XL'], colors: [{ name: 'Navy', hex: '#1B2A4A' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Gray', hex: '#6B6B6B' }] },
-    { id: 'c4', name: 'Olive Field Cap', desc: 'Heavy-duty canvas with a rugged, military-inspired build.', price: 9999, badge: 'New', premium: false, category: 'Caps',
-      images: ['https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80','https://images.unsplash.com/photo-1534215754734-18e55d13e346?w=600&q=80','https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&q=80'],
-      sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Olive', hex: '#4A5D23' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] }
-  ],
-  watches: [
-    { id: 'w1', name: 'Heritage Chronograph', desc: 'Stainless steel case with a premium leather strap.', price: 69999, badge: 'Best Seller', premium: true, category: 'Watches',
-      images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
-      sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'w2', name: 'Minimalist Black', desc: '40mm case with scratch-resistant sapphire crystal.', price: 49999, badge: null, premium: false, category: 'Watches',
-      images: ['https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80','https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80'],
-      sizes: ['Standard', 'Large'], colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Silver', hex: '#C0C0C0' }] },
-    { id: 'w3', name: 'Silver Classic', desc: 'Mesh band with a refined silver dial.', price: 55999, badge: null, premium: true, category: 'Watches',
-      images: ['https://images.unsplash.com/photo-1548171915-e79a380a2a4b?w=600&q=80','https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80','https://images.unsplash.com/photo-1594534475808-b18fc33b045e?w=600&q=80'],
-      sizes: ['Standard'], colors: [{ name: 'Silver', hex: '#C0C0C0' }, { name: 'Gold', hex: '#C8965A' }] },
-    { id: 'w4', name: 'Pilot Automatic', desc: 'Automatic movement with a 42mm case.', price: 92999, badge: 'Premium', premium: true, category: 'Watches',
-      images: ['https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=600&q=80','https://images.unsplash.com/photo-1542496658-e33a6d38d2f6?w=600&q=80','https://images.unsplash.com/photo-1587836374828-4dbafa94cfbe?w=600&q=80'],
-      sizes: ['Standard', 'Large'], colors: [{ name: 'Brown', hex: '#5C3A1E' }, { name: 'Black', hex: '#1A1A1A' }] }
-  ],
-  wallets: [
-    { id: 'wl1', name: 'Bifold Leather Wallet', desc: 'Full-grain Italian leather.', price: 22999, badge: 'Best Seller', premium: true, category: 'Wallets',
-      images: ['https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
-      sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Black', hex: '#1A1A1A' }, { name: 'Tan', hex: '#C4A882' }] },
-    { id: 'wl2', name: 'Slim Card Holder', desc: 'RFID-protected with 8 card slots.', price: 13999, badge: null, premium: false, category: 'Wallets',
-      images: ['https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'],
-      sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }, { name: 'Navy', hex: '#1B2A4A' }] },
-    { id: 'wl3', name: 'Brown Trifold', desc: 'Classic three-fold design.', price: 24999, badge: 'New', premium: false, category: 'Wallets',
-      images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80','https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&q=80','https://images.unsplash.com/photo-1606503825008-909a67e63c3d?w=600&q=80'],
-      sizes: null, colors: [{ name: 'Brown', hex: '#6B4226' }, { name: 'Tan', hex: '#C4A882' }, { name: 'Black', hex: '#1A1A1A' }] },
-    { id: 'wl4', name: 'Money Clip Wallet', desc: 'Minimalist construction.', price: 18999, badge: null, premium: false, category: 'Wallets',
-      images: ['https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80','https://images.unsplash.com/photo-1611010344444-5f9e4d86a6d8?w=600&q=80','https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80'],
-      sizes: null, colors: [{ name: 'Black', hex: '#1A1A1A' }, { name: 'Brown', hex: '#6B4226' }] }
-  ]
-};
+
 
 function getProducts() {
-  var stored = localStorage.getItem('gentifyProducts');
-  if (stored) {
-    var parsed = JSON.parse(stored);
-    if (Object.keys(parsed).length > 0) return parsed;
-  }
+  if (window._firebaseOnly !== false) return {};
+  var d = localStorage.getItem('gentifyProducts');
+  if (d) { try { return JSON.parse(d); } catch(e) {} }
   return {};
 }
 
@@ -228,7 +183,7 @@ function syncCollectionsFromFirestore(callback) {
   }
   window.loadCollectionsFromFirestore().then(function(result) {
     if (result && result.data && result.data.length > 0) {
-      try { localStorage.setItem('gentifyCollections', JSON.stringify(result.data)); } catch (e) {}
+      window._fbCollections = result.data;
     }
     if (callback) callback();
   }).catch(function() {
@@ -238,14 +193,14 @@ function syncCollectionsFromFirestore(callback) {
 
 // ===== BANNER =====
 function getBannerData() {
-  var d = localStorage.getItem('gentifyBanner');
-  if (d) { try { return JSON.parse(d); } catch(e) {} }
+  if (window._fbBanner) return window._fbBanner;
   return { desktop: '', mobile: '' };
 }
 
 function scrollToShop() {
   var el = document.getElementById('collectionsGrid');
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth' });
 }
 
 function renderBanner() {
@@ -288,6 +243,8 @@ function renderBanner() {
 
 // Initialize: render from cache instantly, then sync Firestore in background
 (function initApp() {
+  var _lastRenderTS = 0;
+
   var cached = getProducts();
   if (Object.keys(cached).length > 0) {
     products = cached;
@@ -301,10 +258,6 @@ function renderBanner() {
   if (typeof window.loadProductsFast === 'function') {
     window.loadProductsFast().then(function(result) {
       if (result && result.data && Object.keys(result.data).length > 0) {
-        var hasImgs = Object.keys(result.data).some(function(k) {
-          return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
-        });
-        if (!hasImgs) return;
         if (result.updated > _lastRenderTS) _lastRenderTS = result.updated;
         products = result.data;
         allProducts = getAllProductsFlat();
@@ -324,15 +277,7 @@ function renderBanner() {
     if (!_lastRenderTS && typeof window.loadProductsFromFirestore === 'function') {
       window.loadProductsFromFirestore().then(function(result) {
         if (result && result.data && Object.keys(result.data).length > 0) {
-          var hasImgs = Object.keys(result.data).some(function(k) {
-            return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
-          });
-          if (!hasImgs) return;
           if (result.updated > _lastRenderTS) _lastRenderTS = result.updated;
-          try {
-            localStorage.setItem('gentifyProductsTS', String(result.updated));
-            localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-          } catch (e) {}
           products = result.data;
           allProducts = getAllProductsFlat();
           renderAllProductGrids();
@@ -346,20 +291,10 @@ function renderBanner() {
   syncBannerFromFirestore();
   syncUsersFromFirestore();
 
-  var _lastRenderTS = 0;
-
   if (typeof window.subscribeProducts === 'function') {
     window.subscribeProducts(function(result) {
       if (result.updated <= _lastRenderTS) return;
       _lastRenderTS = result.updated;
-      var hasImgs = Object.keys(result.data).some(function(k) {
-        return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
-      });
-      if (!hasImgs) return;
-      try {
-        localStorage.setItem('gentifyProductsTS', String(result.updated));
-        localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
-      } catch (e) {}
       products = result.data;
       allProducts = getAllProductsFlat();
       renderAllProductGrids();
@@ -368,14 +303,14 @@ function renderBanner() {
 
   if (typeof window.subscribeBanner === 'function') {
     window.subscribeBanner(function(data) {
-      try { localStorage.setItem('gentifyBanner', JSON.stringify(data)); } catch (e) {}
+      if (data) window._fbBanner = data;
       renderBanner();
     });
   }
 
   if (typeof window.subscribeCollections === 'function') {
     window.subscribeCollections(function(data) {
-      try { localStorage.setItem('gentifyCollections', JSON.stringify(data)); } catch (e) {}
+      if (data) window._fbCollections = data;
       renderCollections();
     });
   }
@@ -403,7 +338,6 @@ let detailSelectedColor = null;
 let detailQty = 1;
 let detailCurrentImage = 0;
 
-// ===== RENDER PRODUCTS =====
 function renderProducts(list, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -434,13 +368,8 @@ function renderAllProductGrids() {
 
 // ===== SHOP BY COLLECTION =====
 function getCollections() {
-  var d = localStorage.getItem('gentifyCollections');
-  if (d) { var p = JSON.parse(d); if (p && p.length > 0) return p; }
-  return [
-    { name: 'Caps', image: '', link: 'caps.html' },
-    { name: 'Wallets', image: '', link: 'wallets.html' },
-    { name: 'Watches', image: '', link: 'watches.html' }
-  ];
+  if (window._fbCollections) return window._fbCollections;
+  return [];
 }
 
 function renderCollections() {
@@ -756,11 +685,10 @@ function saveCart() {
         window.setFirestoreUser(user.email, data).catch(function() {});
       }
     }).catch(function() {});
-  } else {
-    try {
-      localStorage.setItem('gentifyCart', JSON.stringify(cart));
-    } catch (e) {}
   }
+  try {
+    localStorage.setItem('gentifyCart', JSON.stringify(cart));
+  } catch (e) {}
 }
 
 function updateCartUI() {

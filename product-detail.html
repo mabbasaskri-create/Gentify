@@ -7,6 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://firestore.googleapis.com" />
+<link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+<script>
+var _AK = "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0";
+var _FB = "https://firestore.googleapis.com/v1/projects/gentify-bbd67/databases/(default)/documents";
+function _fj(r){return r.json()}
+window._pp = Promise.all([fetch(_FB+"/products?key="+_AK).then(_fj),fetch(_FB+"/productImages?key="+_AK).then(_fj)]).catch(function(){});
+window._pb = fetch(_FB+"/catalog/banner?key="+_AK).then(_fj).catch(function(){});
+window._pc = fetch(_FB+"/catalog/collections?key="+_AK).then(_fj).catch(function(){});
+</script>
 <script type="importmap">
 {
   "imports": {

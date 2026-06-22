@@ -18,14 +18,39 @@ getAnalytics(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
+
+// ===== ONLINE/OFFLINE DETECTION =====
+var ON = navigator.onLine;
+window._isOnline = ON;
+function _setOnline() { if (!window._isOnline) { window._isOnline = true; console.log('Firebase: back online'); _reconnectFirebase(); } }
+function _setOffline() { if (window._isOnline) { window._isOnline = false; console.log('Firebase: offline, pausing SDK'); _disconnectFirebase(); } }
+var _onlineListeners = [];
+window._onOnlineChange = function(fn) { _onlineListeners.push(fn); };
+function _notifyOnlineListeners(v) { _onlineListeners.forEach(function(fn) { try { fn(v); } catch(e) {} }); }
+
+window.addEventListener('online', _setOnline);
+window.addEventListener('offline', _setOffline);
+
+var _fbStreamUnsubs = [];
+window._disconnectFirebase = function() {
+  _fbStreamUnsubs.forEach(function(u) { try { u(); } catch(e) {} });
+  _fbStreamUnsubs = [];
+  _notifyOnlineListeners(false);
+};
+window._reconnectFirebase = function() {
+  _notifyOnlineListeners(true);
+};
+window._registerUnsub = function(fn) { _fbStreamUnsubs.push(fn); };
+
 var FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/gentify-bbd67/databases/(default)/documents";
 var API_KEY = "AIzaSyAt0sK3XAxsJEjKJs7G_2gq43LJK8QaDj0";
 
 window.loadProductsFast = function() {
-  return Promise.all([
+  var p = window._pp || Promise.all([
     fetch(FIRESTORE_BASE + "/products?key=" + API_KEY).then(function(r) { return r.json(); }),
     fetch(FIRESTORE_BASE + "/productImages?key=" + API_KEY).then(function(r) { return r.json(); })
-  ]).then(function(results) {
+  ]);
+  return p.then(function(results) {
     var prodData = results[0];
     var imgData = results[1];
     var imagesByProduct = {};
@@ -81,39 +106,31 @@ window.loadProductsFast = function() {
       if (!grouped[p.categoryKey]) grouped[p.categoryKey] = [];
       grouped[p.categoryKey].push(p);
     });
-    var hasImages = allProducts.some(function(p) { return p.images && p.images.length > 0; });
-    if (hasImages) {
-      try {
-        localStorage.setItem('gentifyProducts', JSON.stringify(grouped));
-        localStorage.setItem('gentifyProductsTS', String(maxUpdated || Date.now()));
-      } catch (e) {}
-    }
+    window._fbProducts = { data: grouped, updated: maxUpdated || Date.now() };
     return { data: grouped, updated: maxUpdated || Date.now() };
   }).catch(function() { return null; });
 };
 
 window.loadBannerFast = function() {
-  return fetch(FIRESTORE_BASE + "/catalog/banner?key=" + API_KEY).then(function(r) { return r.json(); }).then(function(doc) {
+  var p = window._pb || fetch(FIRESTORE_BASE + "/catalog/banner?key=" + API_KEY).then(function(r) { return r.json(); });
+  return p.then(function(doc) {
     if (!doc || !doc.fields) return null;
     var dataJson = doc.fields.dataJson && doc.fields.dataJson.stringValue;
     if (!dataJson) return null;
     var parsed = JSON.parse(dataJson);
-    if (parsed.desktop || parsed.mobile) {
-      try { localStorage.setItem('gentifyBanner', JSON.stringify(parsed)); } catch (e) {}
-    }
+    window._fbBanner = parsed;
     return parsed;
   }).catch(function() { return null; });
 };
 
 window.loadCollectionsFast = function() {
-  return fetch(FIRESTORE_BASE + "/catalog/collections?key=" + API_KEY).then(function(r) { return r.json(); }).then(function(doc) {
+  var p = window._pc || fetch(FIRESTORE_BASE + "/catalog/collections?key=" + API_KEY).then(function(r) { return r.json(); });
+  return p.then(function(doc) {
     if (!doc || !doc.fields) return null;
     var dataJson = doc.fields.dataJson && doc.fields.dataJson.stringValue;
     if (!dataJson) return null;
     var parsed = JSON.parse(dataJson);
-    if (parsed && parsed.length > 0) {
-      try { localStorage.setItem('gentifyCollections', JSON.stringify(parsed)); } catch (e) {}
-    }
+    window._fbCollections = parsed;
     return parsed;
   }).catch(function() { return null; });
 };
@@ -305,7 +322,9 @@ window.loadProductsFromFirestore = function() {
       grouped[cat].push(p);
     });
 
-    return { data: grouped, updated: maxUpdated || Date.now() };
+    var ret = { data: grouped, updated: maxUpdated || Date.now() };
+    window._fbProducts = ret;
+    return ret;
   }).catch(function() { return null; });
 };
 
@@ -347,10 +366,8 @@ window.syncBannerFromFirestore = function(callback) {
       var d = snap.data();
       if (d.dataJson) {
         var parsed = JSON.parse(d.dataJson);
-        // Only overwrite localStorage if Firestore actually has image data
-        if (parsed.desktop || parsed.mobile) {
-          try { localStorage.setItem('gentifyBanner', JSON.stringify(parsed)); } catch (e) {}
-        }
+        window._fbBanner = parsed;
+        if (typeof renderBanner === 'function') renderBanner();
       }
     }
     if (callback) callback();
@@ -364,7 +381,7 @@ var _syncTimer = null;
 var _syncReady = false;
 
 window.subscribeProducts = function(onChange) {
-  return onSnapshot(PRODUCTS_COL, function() {
+  var unsub = onSnapshot(PRODUCTS_COL, function() {
     if (!_syncReady) { _syncReady = true; return; }
     if (_syncTimer) clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() {
@@ -377,10 +394,12 @@ window.subscribeProducts = function(onChange) {
       }
     }, 500);
   });
+  _registerUnsub(unsub);
+  return unsub;
 };
 
 window.subscribeBanner = function(onChange) {
-  return onSnapshot(BANNER_DOC, function(snap) {
+  var unsub = onSnapshot(BANNER_DOC, function(snap) {
     if (snap.exists()) {
       var d = snap.data();
       if (d.dataJson) {
@@ -391,10 +410,12 @@ window.subscribeBanner = function(onChange) {
       }
     }
   });
+  _registerUnsub(unsub);
+  return unsub;
 };
 
 window.subscribeCollections = function(onChange) {
-  return onSnapshot(COLLECTIONS_DOC, function(snap) {
+  var unsub = onSnapshot(COLLECTIONS_DOC, function(snap) {
     if (snap.exists()) {
       var d = snap.data();
       if (d.dataJson) {
@@ -405,4 +426,6 @@ window.subscribeCollections = function(onChange) {
       }
     }
   });
+  _registerUnsub(unsub);
+  return unsub;
 };

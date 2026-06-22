@@ -139,8 +139,9 @@ function renderOrders() {
   }
   container.innerHTML = '<h2>My Orders</h2><p class="orders-subtitle">View and track all your orders.</p>' +
     orders.map(o => {
-      const statusClass = (o.status || 'Pending').toLowerCase();
-      const statusLabel = o.status.charAt(0).toUpperCase() + o.status.slice(1);
+      var _st = o.status || 'Pending';
+      const statusClass = _st.toLowerCase();
+      const statusLabel = _st.charAt(0).toUpperCase() + _st.slice(1);
       return `
       <div class="order-card">
         <div class="order-card-header">
@@ -151,7 +152,7 @@ function renderOrders() {
           <span class="order-status ${statusClass}">${statusLabel}</span>
         </div>
         <div class="order-card-body">
-          ${o.items.map(item => `
+          ${(o.items || []).map(item => `
             <div class="order-card-item">
               <img src="${item.img || ''}" alt="${item.name}" />
               <div>
@@ -163,7 +164,7 @@ function renderOrders() {
         </div>
         <div class="order-card-footer">
           <div>
-            <div style="font-size:0.82rem;color:var(--gray)">Subtotal: ${formatPrice(o.subtotal || o.total)} &middot; Delivery: Rs. ${o.deliveryCharges || 300}</div>
+            <div style="font-size:0.82rem;color:var(--gray)">Subtotal: ${formatPrice(o.subtotal !== undefined ? o.subtotal : o.total)} &middot; Delivery: Rs. ${o.deliveryCharges || 300}</div>
             <div class="order-total" style="margin-top:4px">Total: <span>${formatPrice(o.total)}</span></div>
           </div>
           <a href="track-order.html?id=${o.id}" class="track-btn">Track Order</a>

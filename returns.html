@@ -231,7 +231,7 @@ function loadReturnOrders() {
     const itemSel = document.getElementById('returnItem');
     const order = orders.find(o => o.id === this.value);
     if (!order) { itemSel.innerHTML = '<option value="">Select an item</option>'; return; }
-    itemSel.innerHTML = '<option value="">Select an item</option>' + order.items.map(i =>
+    itemSel.innerHTML = '<option value="">Select an item</option>' + (order.items || []).map(i =>
       '<option value="' + i.name + '">' + i.name + ' (Qty: ' + i.qty + ')</option>'
     ).join('');
   });
