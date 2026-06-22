@@ -319,6 +319,28 @@ function renderBanner() {
     window.loadCollectionsFast().then(function() { renderCollections(); });
   }
 
+  // ===== FALLBACK: if REST API fails, try Firebase SDK =====
+  setTimeout(function() {
+    if (!_lastRenderTS && typeof window.loadProductsFromFirestore === 'function') {
+      window.loadProductsFromFirestore().then(function(result) {
+        if (result && result.data && Object.keys(result.data).length > 0) {
+          var hasImgs = Object.keys(result.data).some(function(k) {
+            return result.data[k].some(function(p) { return p.images && p.images.length > 0; });
+          });
+          if (!hasImgs) return;
+          if (result.updated > _lastRenderTS) _lastRenderTS = result.updated;
+          try {
+            localStorage.setItem('gentifyProductsTS', String(result.updated));
+            localStorage.setItem('gentifyProducts', JSON.stringify(result.data));
+          } catch (e) {}
+          products = result.data;
+          allProducts = getAllProductsFlat();
+          renderAllProductGrids();
+        }
+      });
+    }
+  }, 2000);
+
   // ===== BACKGROUND: Firebase SDK setup =====
   syncCollectionsFromFirestore();
   syncBannerFromFirestore();
