@@ -280,6 +280,7 @@ window.loadProductsFromFirestore = function() {
     var imagesByProduct = {};
     imageSnap.forEach(function(d) {
       var img = d.data();
+      if (!img.productId || !img.dataUrl) return;
       if (!imagesByProduct[img.productId]) imagesByProduct[img.productId] = [];
       imagesByProduct[img.productId][img.index] = img.dataUrl;
     });

@@ -503,7 +503,7 @@ function updateDetailGallery() {
   const thumbs = document.getElementById('detailThumbnails');
   thumbs.innerHTML = (detailProduct.images || []).map((img, i) => `
     <div class="detail-thumb ${i === detailCurrentImage ? 'active' : ''}" onclick="switchDetailImage(${i})">
-      <img src="${img}" alt="${detailProduct.name} view ${i + 1}" />
+      <img src="${img || ''}" alt="${detailProduct.name} view ${i + 1}" />
     </div>
   `).join('');
 }
@@ -637,7 +637,7 @@ function updatePdGallery() {
   var thumbs = document.getElementById('pdThumbnails');
   thumbs.innerHTML = (pdProduct.images || []).map(function(img, i) {
     return '<div class="pd-thumb' + (i === pdCurrentImage ? ' active' : '') + '" onclick="switchPdImage(' + i + ')">' +
-      '<img src="' + img + '" alt="' + pdProduct.name + ' view ' + (i + 1) + '" />' +
+      '<img src="' + (img || '') + '" alt="' + pdProduct.name + ' view ' + (i + 1) + '" />' +
       '</div>';
   }).join('');
 
